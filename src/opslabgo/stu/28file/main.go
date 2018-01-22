@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"io"
 	"path/filepath"
+	funcs "opslabgo/stu/28file/funcs"
 )
 
 func main()  {
@@ -47,6 +48,12 @@ func main()  {
 
 	//遍历目录
 	file_list("/local/workspace/opslabGo/data/")
+
+	files,err5 := funcs.List_dir("/local/workspace/opslabGo/data/","txt")
+	fmt.Println(files,err5)
+
+	files1,err6 := funcs.Walk_dir("/local/workspace/opslabGo/data/","txt")
+	fmt.Println(files1,err6)
 }
 
 /**

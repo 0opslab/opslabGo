@@ -8,6 +8,7 @@ import (
 	"io"
 	"path/filepath"
 	funcs "opslabgo/stu/28file/funcs"
+	demo "opslabgo/stu/28file/demo"
 )
 
 func main()  {
@@ -22,6 +23,11 @@ func main()  {
 	if err0 != nil{
 		fmt.Println(file_name1,err0)
 	}
+
+	//loadfile
+	lines,err := funcs.Read_File_Line(file_name1)
+	fmt.Println(lines,err)
+
 
 	file_dst := "/local/workspace/opslabGo/data/tmp/go_file_dst.txt"
 	rst,errcopy := copyFile(file_name,file_dst)
@@ -46,6 +52,8 @@ func main()  {
 	}
 	fmt.Println("file content:",str)
 
+
+
 	//遍历目录
 	file_list("/local/workspace/opslabGo/data/")
 
@@ -54,6 +62,9 @@ func main()  {
 
 	files1,err6 := funcs.Walk_dir("/local/workspace/opslabGo/data/","txt")
 	fmt.Println(files1,err6)
+
+	demo.Bufio_Dmoe()
+	demo.IOUtil_Demo()
 }
 
 /**

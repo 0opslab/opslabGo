@@ -1,4 +1,4 @@
-package main
+package demo
 
 import (
 	"os"
@@ -46,11 +46,11 @@ func load_file(filename string,list *[]string){
 }
 
 
-func main(){
-	prose_list := make([]string,0)
-	load_file("c:/data.json",&prose_list)
-
-
-	writeLines(prose_list,"c:/data1.txt")
-
-}
+//func main(){
+//	prose_list := make([]string,0)
+//	load_file("c:/data.json",&prose_list)
+//
+//
+//	writeLines(prose_list,"c:/data1.txt")
+//
+//}

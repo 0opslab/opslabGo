@@ -1,5 +1,6 @@
 package entity
 
+
 type ResultInfo struct {
 	//来源接口
 	From  string    `json:"-"`;
@@ -30,3 +31,4 @@ func (a ResultSlice) Swap(i, j int) {
 func (a ResultSlice) Less(i, j int) bool {
 	return a[j].Order < a[i].Order
 }
+

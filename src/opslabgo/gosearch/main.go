@@ -64,7 +64,6 @@ func Search(w http.ResponseWriter, r *http.Request) {
 		chan_cnblogs := make(chan []entity.ResultInfo)
 		go sties.CnblogsQuery(request_key, 2, time.Second * 1, chan_cnblogs)
 
-
 		for i := 0; i < 4; i++ {
 			select {
 			case lst_baidu := <-chan_baidu:
@@ -120,4 +119,6 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	b, _ := json.Marshal(lst)
 	fmt.Fprintf(w, string(b))
+
 }
+

@@ -52,12 +52,12 @@ func worker(done chan bool) {
 }
 
 //定义该函数中允许发送数据，不允许接收数据
-func ping(pings chan<- string, msg string) {
+func ping(pings chan <- string, msg string) {
 	pings <- msg
 }
 
 //定义函数pings用来接收数据，pongs用来发送数据
-func pong(pings <-chan string, pongs chan<- string) {
+func pong(pings <-chan string, pongs chan <- string) {
 	msg := <-pings
 	pongs <- msg
 }

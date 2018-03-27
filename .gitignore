@@ -11,3 +11,4 @@ build/
 pkg/
 src/github.com/
 src/sourcegraph.com/
+src/andybalholm/

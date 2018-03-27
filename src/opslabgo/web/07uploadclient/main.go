@@ -13,7 +13,7 @@ import (
 /**
  模拟http上传文件到目标url
  */
-func postFile(file_name string,target_url string) error  {
+func postFile(file_name string, target_url string) error {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	//关键的一步操作
@@ -54,7 +54,7 @@ func postFile(file_name string,target_url string) error  {
 	return nil
 }
 
-func main()  {
+func main() {
 	target_url := "http://localhost:9090/upload"
 	filename := "/Users/mac/Pictures/timg.jpg"
 	postFile(filename, target_url)

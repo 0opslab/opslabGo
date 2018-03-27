@@ -1,14 +1,5 @@
 package demo
 
-import (
-    "fmt"
-	"os"
-	"io"
-	"bufio"
-	//"encoding/json"
-)
-
-
 var prose_list []string
 
 //func main() {

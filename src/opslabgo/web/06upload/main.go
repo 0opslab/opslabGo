@@ -1,4 +1,5 @@
 package main
+
 import (
 	"fmt"
 	"log"
@@ -25,16 +26,16 @@ func http_info(w http.ResponseWriter, r *http.Request) {
 	//fmt.Println(r.Form["url_long"])
 	params := ""
 	for k, v := range r.Form {
-		params += "&"+k+"="+strings.Join(v, "")
+		params += "&" + k + "=" + strings.Join(v, "")
 	}
 	fmt.Fprintf(w, params) //这个写入到w的是输出到客户端的
 }
 /**
  处理登录信息
  */
-func upload(w http.ResponseWriter,r *http.Request){
+func upload(w http.ResponseWriter, r *http.Request) {
 	//获取请求方式
-	fmt.Println("methdo:",r.Method)
+	fmt.Println("methdo:", r.Method)
 	r.ParseForm()
 	if r.Method == "GET" {
 		crutime := time.Now().Unix()
@@ -55,7 +56,7 @@ func upload(w http.ResponseWriter,r *http.Request){
 		defer file.Close()
 		fmt.Fprintf(w, "%v", handler.Header)
 		file_name := filepath.Base(handler.Filename);
-		f, err := os.OpenFile("/tmp/"+file_name, os.O_WRONLY|os.O_CREATE, 0666)  // 此处假设当前目录下已存在test目录
+		f, err := os.OpenFile("/tmp/" + file_name, os.O_WRONLY | os.O_CREATE, 0666)  // 此处假设当前目录下已存在test目录
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -65,11 +66,11 @@ func upload(w http.ResponseWriter,r *http.Request){
 	}
 }
 
-func main(){
-	http.HandleFunc("/",http_info)
-	http.HandleFunc("/upload",upload)
-	err := http.ListenAndServe(":9090",nil)
-	if err != nil{
-		log.Fatal("Service:",err)
+func main() {
+	http.HandleFunc("/", http_info)
+	http.HandleFunc("/upload", upload)
+	err := http.ListenAndServe(":9090", nil)
+	if err != nil {
+		log.Fatal("Service:", err)
 	}
 }

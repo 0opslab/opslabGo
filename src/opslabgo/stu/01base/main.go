@@ -1,15 +1,14 @@
 package main
 
-
 import "fmt"
 
-func main(){
+func main() {
 	//简单的演示
 	fmt.Println("Hello world")
 
-	fmt.Println("go"+" style")
-	fmt.Println("1+1=",1+1)
-	fmt.Println("7.0/3.0=",7.0/3.0 )
+	fmt.Println("go" + " style")
+	fmt.Println("1+1=", 1 + 1)
+	fmt.Println("7.0/3.0=", 7.0 / 3.0)
 	fmt.Println(true && false)
 	fmt.Println(true || false)
 	fmt.Println(!true)
@@ -20,8 +19,8 @@ func main(){
 	var a string = "initstr"
 	fmt.Println(a)
 
-	var b,c int = 1,2
-	fmt.Println(b,c)
+	var b, c int = 1, 2
+	fmt.Println(b, c)
 
 	//推断已经初始化的变量类型
 	var d = true
@@ -37,24 +36,24 @@ func main(){
 	fmt.Println(f)
 
 	//const 用于声明一个常量
-	const s string="constant str"
+	const s string = "constant str"
 
 
 	//for循环
 	//最常用的，带单个循环条件
-	i :=1
-	for i <= 3{
+	i := 1
+	for i <= 3 {
 		fmt.Println(i)
-		i =i+1
+		i = i + 1
 	}
 
 	//初始化，条件，后续
-	for j:=7;j<10;j++{
+	for j := 7; j < 10; j++ {
 		fmt.Println(j)
 	}
 
 	//不带条件的for循环一直执行，知道内部使用break;或者return
-	for{
+	for {
 		fmt.Println("loop")
 		break
 	}
@@ -62,9 +61,9 @@ func main(){
 
 
 	//if-else
-	if 7 % 2 ==0{
+	if 7 % 2 == 0 {
 		fmt.Println("7能被2整除")
-	}else{
+	} else {
 		fmt.Println("7不能被2整除")
 	}
 
@@ -77,8 +76,8 @@ func main(){
 		fmt.Println(num, "has multiple digits")
 	}
 
-	ii:= 2
-	fmt.Print("write ",ii, " as ")
+	ii := 2
+	fmt.Print("write ", ii, " as ")
 	switch ii {
 	case 1:
 		fmt.Println("one")
@@ -87,11 +86,11 @@ func main(){
 	case 3:
 		fmt.Println("three")
 	}
-	
-	iii:= 2
+
+	iii := 2
 	fmt.Print("write ", iii, " as ")
 	switch iii {
-	case 1,2:
+	case 1, 2:
 		fmt.Println("one or two")
 	case 3:
 		fmt.Println("three")

@@ -6,7 +6,7 @@ import (
 )
 
 //通过jobs来接收任务，通过result返回结果
-func worker(id int, jobs <-chan int, results chan<- int) {
+func worker(id int, jobs <-chan int, results chan <- int) {
 	for j := range jobs {
 		fmt.Println("worker", id, "pricessing job", j)
 		time.Sleep(time.Second)

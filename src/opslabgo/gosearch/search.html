@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>
+        index
+    </title>
+    <link href="https://st.0opslab.com/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+        body {
+            margin-top: 10px;
+        }
+
+        .middle {
+            float: none;
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+    <script src="https://st.0opslab.com/jquery.1.11.3.min.js">
+    </script>
+    <script src="https://st.0opslab.com/bootstrap/js/bootstrap.min.js">
+    </script>
+    </link>
+    </meta>
+    </meta>
+    </meta>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <input autocapitalize="off" autocomplete="off" autocorrect="off" autofocus="autofocus" class="form-control"
+               id="q" size="100" spellcheck="true" type="search" value="">
+        </input>
+    </div>
+    <div class="results">
+        <div class="result">
+            <h4 class="title"><a href="http://www.51dzw.com/companynews/news_217454.html" target="_blank">GO10-SME-51电子网-济南誉光微电电子科技有限公司</a>
+            </h4>
+            <div class="descrpt">
+                GO10-SME-GO10-SME电力电子行业的创新主要特点:SMD自动装配,ICSO8&ICSO16封装非接触式AC&DC电流测量,额定电流10、20或30A在+25°C时1.3%!的(MISSING)精度2μs响应时间..."
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://st.0opslab.com/jquery-1.11.3.min.js" type="text/javascript">
+</script>
+<script type="text/javascript">
+    document.onkeydown = function (e) {
+        if ((e.keyCode || e.which) == 13) {
+            $.getJSON('http://localhost:9090/s.php?k=' + $("#q").val(), function (data) {
+                var html = '<div class="result"><h4 class="title"><a href="' + data[i].Href + '" target="_blank">' + data.Title + '</a></h4><div class="descrpt">' + data[i].Desc + '</div></div>';
+                $(".results").append(html);
+            });
+        }
+    }
+
+</script>
+</body>
+</html>

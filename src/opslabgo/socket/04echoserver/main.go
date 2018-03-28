@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -30,11 +31,15 @@ func main() {
 
 			for {
 				message, _ := reader.ReadString('\n')
-
-				if string(message) == "quit" {
+				cmd := strings.TrimSpace(message)
+				if cmd == "" {
+					break
+				}
+				fmt.Println(conn.RemoteAddr().String() + " => " + cmd)
+				if strings.EqualFold(cmd, "quit") {
 					conn.Close()
 				} else {
-					echo := time.Now().String() + string(message) + "\n"
+					echo := time.Now().String() + cmd + "\n"
 					conn.Write([]byte(echo))
 				}
 			}

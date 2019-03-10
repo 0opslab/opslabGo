@@ -12,3 +12,5 @@ pkg/
 src/github.com/
 src/sourcegraph.com/
 src/andybalholm/
+src/andybalholm/cascadia
+src/golang.org/x/net

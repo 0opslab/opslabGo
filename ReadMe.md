@@ -52,3 +52,10 @@ SET GOOS=linux
 SET GOARCH=amd64
 go build main.go
 ```
+
+## 安装库
+话说go还在成长阶段,如果那go开发的任务比较重的话，还需要做很多工作，安装很多的第三方库，当然安装第三方库很简单。
+下面是是安装一个生成UUID的库。
+```bash
+go get github.com/satori/go.uuid
+```

@@ -59,3 +59,13 @@ go build main.go
 ```bash
 go get github.com/satori/go.uuid
 ```
+
+
+### 现在问的
+[go入门教程](http://c.biancheng.net/golang/)
+
+[go入门指南](https://books.studygolang.com/the-way-to-go_ZH_CN/)
+
+[学习go的标准库](https://books.studygolang.com/The-Golang-Standard-Library-by-Example/)
+
+[go by example](https://books.studygolang.com/gobyexample/)

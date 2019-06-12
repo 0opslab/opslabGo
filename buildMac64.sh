@@ -1,4 +1,4 @@
 export CGO_ENABLED=0
 export GOOS=darwin
 export GOARCH=amd64
-go build -o build/weixin src/base/web/03web/main.go 
+go build -o build/UploadRysnc src/opslabgo/main.go

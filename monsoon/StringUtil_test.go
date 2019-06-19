@@ -12,4 +12,6 @@ func TestBase64(t *testing.T) {
 
 	fmt.Println(base64)
 	fmt.Println(strs1)
+
+	fmt.Println(Reverse(strs))
 }

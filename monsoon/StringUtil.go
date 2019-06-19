@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"bytes"
+	"regexp"
 )
 
 
@@ -45,6 +46,14 @@ func Sha512String(s string) string {
 	return Sha512Byte([]byte(s))
 }
 
+// 字符串反转
+func Reverse(s string) string{
+	r := []rune(s)
+	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
+		r[i], r[j] = r[j], r[i]
+	}
+	return string(r)
+}
 
 func Export(v interface{}) string {
 	b, err := json.Marshal(v)
@@ -63,3 +72,39 @@ func Export(v interface{}) string {
 func Json(v interface{}) string {
 	return Export(v)
 }
+
+// 检测字符串是否为空
+// check string is empty
+func IsEmpty(s string) bool {
+	if len(s) == 0 {
+		return true
+	}
+	return false
+}
+
+// 判断字符串是否不为空
+// check string is not empty
+func IsNotEmpty(s string) bool{
+	return !IsEmpty(s)
+}
+
+
+// 判断字符串是否是空白字符串
+// check string is whitespace,empty
+func IsBlank(s string) bool{
+	if len(s) == 0{
+		return true
+	}
+	reg := regexp.MustCompile(`^\s+$`)
+	actual := reg.MatchString(s)
+	if actual {
+		return true
+	}
+	return false
+}
+
+// 判断字符串是否为不为空白字符串
+func IsNotBlank(s string) bool{
+	return !IsBlank(s)
+}
+

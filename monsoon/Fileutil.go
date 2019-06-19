@@ -2,6 +2,7 @@ package monsoon
 
 import (
 	"archive/zip"
+	"bufio"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -388,4 +389,80 @@ func ZipUnCompress(zipFile string, destDir string) error {
 		}
 	}
 	return nil
+}
+
+
+
+
+
+// WriteLinesSlice writes the given slice of lines to the given file.
+func WriteLinesSlice(lines []string, path string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+	for _, line := range lines {
+		fmt.Fprintln(w, line)
+	}
+	return w.Flush()
+}
+
+// ReadLinesSlice reads a text file line by line into a slice of strings.
+// Not recommended for use with very large files due to the memory needed.
+//
+//   lines, err := fileutil.ReadLinesSlice(filePath)
+//   if err != nil {
+//       log.Fatalf("readLines: %s\n", err)
+//   }
+//   for i, line := range lines {
+//       fmt.Printf("  Line: %d %s\n", i, line)
+//   }
+//
+// nil is returned if there is an error opening the file
+//
+func ReadLinesSlice(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines, scanner.Err()
+}
+
+// ReadLinesChannel reads a text file line by line into a channel.
+//
+//   c, err := fileutil.ReadLinesChannel(fileName)
+//   if err != nil {
+//      log.Fatalf("readLines: %s\n", err)
+//   }
+//   for line := range c {
+//      fmt.Printf("  Line: %s\n", line)
+//   }
+//
+// nil is returned (with the error) if there is an error opening the file
+//
+func ReadLinesChannel(filePath string) (<-chan string, error) {
+	c := make(chan string)
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			c <- scanner.Text()
+		}
+		close(c)
+	}()
+	return c, nil
 }

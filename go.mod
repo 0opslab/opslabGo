@@ -13,6 +13,7 @@ require (
 	github.com/go-redis/redis v6.15.2+incompatible //indirect
 	github.com/google/logger v1.0.1
 	github.com/sirupsen/logrus v1.4.2 // indirect
+	golang.org/x/text v0.3.0
 )
 
 go 1.12

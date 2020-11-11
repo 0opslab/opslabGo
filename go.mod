@@ -11,7 +11,12 @@ replace (
 require (
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/go-redis/redis v6.15.2+incompatible //indirect
+	github.com/gomarkdown/mdtohtml v0.0.0-20180202094705-7346712f31b4 // indirect
 	github.com/google/logger v1.0.1
+	github.com/gookit/color v1.3.2 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.4 // indirect
+	github.com/russross/blackfriday v2.0.0+incompatible // indirect
+	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	golang.org/x/text v0.3.0
 )

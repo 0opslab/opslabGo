@@ -3,15 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gookit/color"
-	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
-	"golang.org/x/net/html"
-	"io"
 	"io/ioutil"
-	"log"
+	"opslabGo/monsoon"
+	"os"
+	"path"
+	"path/filepath"
+	"regexp"
+	"runtime"
 	"strings"
 )
 
@@ -37,154 +37,195 @@ type HelperConfig struct {
 	} `json:'STYLE'`
 }
 
-var app = HelperConfig{}
+var App = HelperConfig{}
+
+//创建并加载配置文件
+func createLoadConfFile(v interface{}) error{
+	sysType := runtime.GOOS
+	jsonConfigFile := ""
+	if sysType == "linux" {
+		jsonConfigFile = "/etc/cmdhelp.conf"
+	}
+	if sysType == "windows" {
+		jsonConfigFile = "C:/windows/cmdhelp.conf"
+	}
+	if !monsoon.FileIsExist(jsonConfigFile) {
+		content := `{
+    		"addr":"0.0.0.0:9090",
+			"path":"c:/var/upload/wwww/",
+			"fileNameLength":"11",
+			"STYLE":{
+				"h1_fg":"FFFFFF",
+				"h1_bg":"FF0000",
+				"h2_fg":"FFFFFF",
+				"h2_bg":"FF0000",
+				"h3_fg":"FFFFFF",
+				"h3_bg":"FF0000",
+				"h4_fg":"FFFFFF",
+				"h4_bg":"FF0000",
+				"h5_fg":"FFFFFF",
+				"h5_bg":"FF0000",
+				"h6_fg":"FFFFFF",
+				"h6_bg":"FF0000"
+			}
+		}`
+		monsoon.WriteString(jsonConfigFile, content)
+		err := json.Unmarshal([]byte("content"), &v)
+		return err
+	} else {
+		content, err := ioutil.ReadFile(jsonConfigFile)
+		if err == nil {
+			err = json.Unmarshal(content, &v)
+		}
+		return err
+	}
+
+}
 
 func main() {
-
-	//confile := flag.String("conf", "", "the configuration file")
-	//flag.Parse()
-	//if *confile == "" {
-	//	fmt.Println("Please specify the configuration file")
-	//	return
-	//}
-	jsonConfigFile := "C:\\workspace\\opslabGo\\cmdhepler\\conf\\server1.conf"
-	content, fileErr := ioutil.ReadFile(jsonConfigFile)
-	if fileErr != nil {
+	err := createLoadConfFile(&App)
+	if err != nil{
 		color.Red.Println("ReadConfigFileError")
 		return
 	}
-	err := json.Unmarshal(content, &app)
-	if err != nil {
-		color.Red.Println("ParseConfigFileError")
-		return
-	}
 
-	fileName := "C:\\workspace\\useful-documents\\db\\dba-command.md"
-	fileContent := loadFileContent(fileName)
-	color_print(fileContent)
-}
-func loadFileContent(file string) string {
-	content, fileErr := ioutil.ReadFile(file)
-	if fileErr != nil {
-		panic("Read Config Error")
-	}
-	return string(content)
-}
+	fmt.Println(App)
 
-func color_print(content string) {
-	// 利用 bluemonday 解析
-	unsafe := blackfriday.Run([]byte(content))
-	htmlContent := string(bluemonday.UGCPolicy().SanitizeBytes(unsafe))
-	fmt.Println(htmlContent)
-	doc, err := html.Parse(strings.NewReader(htmlContent))
-	if err != nil {
-		log.Panic(err)
-	}
-	bn, err := Body(doc)
-	if err != nil {
-		return
-	}
-	//fmt.Println("@@@@",bn)
-	//fmt.Println("@@@@")
-	//body := renderNode(bn)
-	//fmt.Println(body)
-	h1 := color.HEXStyle(app.STYLE.H1_FG, app.STYLE.H1_BG)
-	h2 := color.HEXStyle(app.STYLE.H2_FG, app.STYLE.H2_BG)
-	h3 := color.HEXStyle(app.STYLE.H3_FG, app.STYLE.H3_BG)
-	h4 := color.HEXStyle(app.STYLE.H4_FG, app.STYLE.H4_BG)
-	h5 := color.HEXStyle(app.STYLE.H5_FG, app.STYLE.H5_BG)
-	h6 := color.HEXStyle(app.STYLE.H6_FG, app.STYLE.H6_BG)
-
-	for cc := bn.FirstChild; cc != nil; cc = cc.NextSibling {
-		text := &bytes.Buffer{}
-		collectText(cc, text)
-
-		switch cc.Data {
-		case "h1":
-			h1.Println(text)
-		case "h2":
-			h2.Println(text)
-		case "h3":
-			h3.Println(text)
-		case "h4":
-			h4.Println(text)
-		case "h5":
-			h5.Println(text)
-		case "h6":
-			h6.Println(text)
-		case "p":
-			p := renderNode(cc)
-			pLen := len(p)
-			p = p[3:pLen-4]
-			if strings.HasPrefix(p, "\n<code>") {
-				codeLine := strings.Split(p, "\n")
-				codeLen := len(codeLine)
-				for i := 1; i < codeLen -1; i++ {
-					line := codeLine[i]
-					if strings.HasPrefix(line, "#") {
-						color.Gray.Println(line)
-					} else {
-						color.Green.Println(line)
-					}
-				}
-			} else {
-				color.Gray.Println(p)
-			}
-
-			//text.WriteString(cc.FirstChild.Data)
-			//fmt.Println(text)
-			//case "code":
-			//	fmt.Println("@@@@")
-			//	color.Green.Println(text)
-		}
-	}
-
-	//lines := strings.Split(content, "\n")
-	//for i := 0; i < len(lines); i++ {
-	//	line := lines[i]
-	//	i := strings.HasPrefix(line, "#")
-	//	if (i) {
-	//		re3, _ := regexp.Compile("^#{1,}\\s+");
-	//		line := re3.ReplaceAllString(line, "");
-	//		h1.Println(line)
-	//	} else {
-	//		color.Gray.Println(line)
-	//	}
-	//
+	//fileName := "C:\\workspace\\useful-command\\doc\\git.md"
+	//fileContent, err := ioutil.ReadFile(fileName)
+	//if err != nil {
+	//	color.Red.Println("ReadFileError")
+	//	return
 	//}
+	//color_print(string(fileContent))
 
-}
 
-func renderNode(n *html.Node) string {
-	var buf bytes.Buffer
-	w := io.Writer(&buf)
-	html.Render(w, n)
-	return buf.String()
-}
-
-func collectText(n *html.Node, buf *bytes.Buffer) {
-	if n.Type == html.TextNode {
-		buf.WriteString(n.Data)
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		collectText(c, buf)
-	}
-}
-func Body(doc *html.Node) (*html.Node, error) {
-	var body *html.Node
-	var crawler func(*html.Node)
-	crawler = func(node *html.Node) {
-		if node.Type == html.ElementNode && node.Data == "body" {
-			body = node
-			return
-		}
-		for child := node.FirstChild; child != nil; child = child.NextSibling {
-			crawler(child)
+	cmdPath := "/data/workspace/useful-command"
+	for i, v := range os.Args {
+		if i > 0 {
+			files, _, _ := monsoon.WalkDirFiles(cmdPath, "md")
+			for _, file := range files {
+				if strings.ToLower(TrimFile(file)) == strings.ToLower(v) {
+					fileContent, err := ioutil.ReadFile(file)
+					if err != nil {
+						color.Red.Println("ReadFileError")
+						return
+					}
+					color_print(string(fileContent))
+				}
+			}
 		}
 	}
-	crawler(doc)
-	if body != nil {
-		return body, nil
+
+}
+
+/**
+ * @func 命令行彩色打印
+ */
+func color_print(content string) {
+	h1 := color.HEXStyle(App.STYLE.H1_FG, App.STYLE.H1_BG)
+	h2 := color.HEXStyle(App.STYLE.H2_FG, App.STYLE.H2_BG)
+	h3 := color.HEXStyle(App.STYLE.H3_FG, App.STYLE.H3_BG)
+	h4 := color.HEXStyle(App.STYLE.H4_FG, App.STYLE.H4_BG)
+	h5 := color.HEXStyle(App.STYLE.H5_FG, App.STYLE.H5_BG)
+	h6 := color.HEXStyle(App.STYLE.H6_FG, App.STYLE.H6_BG)
+	Code := color.Success
+	Comment := color.Gray
+	content = strings.ReplaceAll(content, "\r\n", "\n")
+	content = strings.ReplaceAll(content, "\r", "\n")
+	lines := strings.Split(content, "\n")
+	var buffer bytes.Buffer
+	adds := false
+
+	var s5 []string
+	for _, line := range lines {
+		if strings.HasPrefix(line, "```") && !adds {
+			adds = true
+		}
+
+		if adds {
+			buffer.WriteString(line + "\n")
+			if line == "```" {
+				s5 = append(s5, buffer.String())
+				buffer.Reset()
+				adds = false
+			}
+		} else {
+			s5 = append(s5, line)
+		}
+
 	}
-	return nil, errors.New("Missing <body> in the node tree")
+
+	for _, value := range s5 {
+		if strings.HasPrefix(value, "######") {
+			value = value[6:]
+			h6.Printf("%-120s", trimStr(value))
+			Comment.Println("")
+		} else if strings.HasPrefix(value, "#####") {
+			value = value[5:]
+			h5.Printf("%-120s", trimStr(value))
+			Comment.Println("")
+		} else if strings.HasPrefix(value, "####") {
+			value = value[4:]
+			h4.Printf("%-120s", trimStr(value))
+			Comment.Println("")
+		} else if strings.HasPrefix(value, "###") {
+			value = value[3:]
+			h3.Printf("%-120s", trimStr(value))
+			Comment.Println("")
+		} else if strings.HasPrefix(value, "##") {
+			value = value[2:]
+			h2.Printf("%-120s", trimStr(value))
+			Comment.Println("")
+		} else if strings.HasPrefix(value, "#") {
+			value = value[1:]
+			h1.Printf("%-120s", trimStr(value))
+			Comment.Println("")
+		} else if strings.HasPrefix(value, "```") {
+			ll := strings.Split(value, "\n")
+			for _, l := range ll {
+				if strings.HasPrefix(l, "```") {
+					continue
+				}
+				if strings.HasPrefix(l, "#") || strings.HasPrefix(l, "/") {
+					Comment.Println(delComment(trimStr(l)))
+				} else if strings.HasPrefix(l, "^") {
+					Code.Println(trimStr(l[1:]))
+				} else {
+					Code.Println(trimStr(l))
+				}
+			}
+		} else {
+			Comment.Println(delComment(trimStr(value)))
+		}
+	}
+}
+
+
+//@func 利用正则表达式压缩字符串，去除空格或制表符匹配一个或多个空白符的正则表达式
+func trimStr(strs string) string {
+	return strings.Trim(strings.Trim(strings.Trim(strs, " "), "\n"), "\r")
+}
+
+
+//@func 删除行收的助手符号# 和 /
+func delComment(strs string) string {
+	re3, _ := regexp.Compile("(^#{1,})|(^/{1,})")
+	rep := re3.ReplaceAllString(strs, "");
+	return trimStr(rep)
+}
+
+
+//@func 获取文件名
+func TrimFile(fullFilename string) string {
+	//获取文件名带后缀
+	filenameWithSuffix := filepath.Base(fullFilename)
+	//fmt.Println("filenameWithSuffix =", filenameWithSuffix)
+	//获取文件后缀
+	fileSuffix := path.Ext(filenameWithSuffix)
+	//fmt.Println("fileSuffix =", fileSuffix)
+
+	//获取文件名
+	filenameOnly := strings.TrimSuffix(filenameWithSuffix, fileSuffix)
+	return filenameOnly
 }

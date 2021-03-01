@@ -1,6 +1,9 @@
 package main
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+)
 
 //GO 提供了一个flag包，支持基本的命令行标志解析
 func main() {

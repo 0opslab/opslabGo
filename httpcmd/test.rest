@@ -1,7 +1,0 @@
-### 测试
-GET http://localhost:10000/httpcmd
-  ?akey=sswer
-  &item=pingbd
-
-###
-

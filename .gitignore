@@ -5,5 +5,3 @@ build/
 .DB_Store
 .DB_Store?
 *.log
-.DS_Store
-.DS_Store?

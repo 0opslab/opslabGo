@@ -5,3 +5,17 @@ build/
 .DB_Store
 .DB_Store?
 *.log
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so
+*.a
+*.pyc
+*.pyo
+__pycache__
+*.rej
+.*.swp
+

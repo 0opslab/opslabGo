@@ -16,13 +16,12 @@ import (
 )
 
 
-var verbose = flag.Bool("verbose", false, "print info level logs to stdout")
-
 var akey string
 var cmdlist map[string]interface{}
 var shell = false
+var logPath string
 
-func main() {
+func loadConfig(){
 	sysType := runtime.GOOS
 	jsonConfigFile := ""
 
@@ -31,7 +30,7 @@ func main() {
 		shell = true
 	}
 	if sysType == "windows" {
-		jsonConfigFile = "C:/httpcmd.conf"
+		jsonConfigFile = "./httpcmd.conf"
 	}
 	tempMap := make(map[string]interface{})
 	content, err := ioutil.ReadFile(jsonConfigFile)
@@ -39,21 +38,38 @@ func main() {
 		panic(err)
 	}
 	err = json.Unmarshal(content, &tempMap)
+	if err != nil {
+		panic(err)
+	}
 	akey = tempMap["akey"].(string)
-	logPath := tempMap["logpath"].(string)
 	cmdlist = tempMap["cmdlist"].(map[string]interface{})
+	logPath = tempMap["logpath"].(string)
+	logger.Info("httpCmdReload=> success")
+}
+func RunCmd(cmd string, shell bool) string {
+	logger.Info("cmd=> ",cmd)
+	if shell {
+		out, err := exec.Command("bash", "-c", cmd).Output()
+		if err != nil {
+			logger.Info("InvalidCmd=> ",cmd)
+		}
+		return string(out)
+	} else {
+		out, err := exec.Command("cmd", "/C", cmd).Output()
+		if err != nil {
+			logger.Info("InvalidCmd=> ",cmd)
+		}
+		return string(out)
+	}
+}
 
-	//for k, v := range cmdlist {
-	//	fmt.Println("============", k, "==================")
-	//	//responseBody := RunCmd()
-	//	//fmt.Println(responseBody)
-	//	command := v.(string)
-	//	responseBody := RunCmd(command, shell)
-	//	fmt.Println(responseBody)
-	//}
+func main() {
+	
+	loadConfig()
 
-	//flag.Parse()
 
+	//init logger
+	var verbose = flag.Bool("verbose", false, "print info level logs to stdout")
 	lf, err := os.OpenFile(logPath, os.O_CREATE | os.O_WRONLY | os.O_APPEND, 0660)
 	if err != nil {
 		logger.Fatalf("Failed to open log file: %v", err)
@@ -62,8 +78,11 @@ func main() {
 	defer logger.Init("LoggerExample", *verbose, true, lf).Close()
 
 
-
 	http.HandleFunc("/httpcmd", httpCmd)
+	http.HandleFunc("/httpcmdList", httpCmdList)
+	http.HandleFunc("/httpcmdReload", httpCmdReload)
+	http.HandleFunc("/httpcmdInfo", httpCmdInfo)
+	
 	//设置监听的端口
 	errs := http.ListenAndServe(":10000", nil)
 	if errs != nil {
@@ -83,10 +102,7 @@ func httpCmd(w http.ResponseWriter, r *http.Request) {
 	key := r.Form.Get("key")
 	item := r.Form.Get("item")
 
-
-	timeStr:=time.Now().Format("2006010215")
-	fmt.Println(timeStr)
-
+	logger.Info("httpCmd =>",item)
 
 	responseBody := "Invalid request"
 	//通过简单的md5校验实现简单层面的安全控制
@@ -97,24 +113,25 @@ func httpCmd(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	fmt.Fprintln(w, responseBody)
-
 }
 
-func RunCmd(cmd string, shell bool) string {
-	logger.Info("cmd=> ",cmd)
-	if shell {
-		out, err := exec.Command("bash", "-c", cmd).Output()
-		if err != nil {
-			logger.Info("InvalidCmd=> ",cmd)
-			//panic("some error found")
-		}
-		return string(out)
-	} else {
-		out, err := exec.Command("cmd", "/C", cmd).Output()
-		if err != nil {
-			logger.Info("InvalidCmd=> ",cmd)
-			//panic("some error found")
-		}
-		return string(out)
+func httpCmdReload(w http.ResponseWriter, r *http.Request) {
+	loadConfig()
+	fmt.Fprintln(w, "success")
+}
+
+func httpCmdList(w http.ResponseWriter, r *http.Request) {
+	jsonStr, err := json.Marshal(cmdlist)
+	if err != nil {
+			fmt.Println("MapToJsonDemo err: ", err)
 	}
+	fmt.Fprintln(w, string(jsonStr))
+}
+
+func httpCmdInfo(w http.ResponseWriter, r *http.Request){
+	responseBody := ""
+	for k, v := range cmdlist {
+		responseBody += k+v.(string)
+	}
+	fmt.Fprintln(w, responseBody)
 }

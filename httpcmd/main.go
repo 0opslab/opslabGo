@@ -21,6 +21,9 @@ var cmdlist map[string]interface{}
 var shell = false
 var logPath string
 
+/**
+ * 加载配置文件信息
+ */
 func loadConfig(){
 	sysType := runtime.GOOS
 	jsonConfigFile := ""
@@ -63,10 +66,23 @@ func RunCmd(cmd string, shell bool) string {
 	}
 }
 
+/**
+*	返回所有的map键值
+*/
+func Map_Get_Keys(m map[string]interface{}) []string {
+	j := 0
+	keys := make([]string, len(m))
+	for k := range m {
+		keys[j] = k
+		j++
+	}
+	return keys
+}
+
+
 func main() {
 	
 	loadConfig()
-
 
 	//init logger
 	var verbose = flag.Bool("verbose", false, "print info level logs to stdout")
@@ -102,10 +118,10 @@ func httpCmd(w http.ResponseWriter, r *http.Request) {
 	key := r.Form.Get("key")
 	item := r.Form.Get("item")
 
-	logger.Info("httpCmd =>",item)
-
+	logger.info("httpCmdRun =>",item)
 	responseBody := "Invalid request"
 	//通过简单的md5校验实现简单层面的安全控制
+	timeStr:=time.Now().Format("2006010215")
 	if key == md5V(akey+":"+timeStr+":"+item) {
 		if realCmd, ok := cmdlist[item]; ok {
 			command := realCmd.(string)
@@ -121,9 +137,10 @@ func httpCmdReload(w http.ResponseWriter, r *http.Request) {
 }
 
 func httpCmdList(w http.ResponseWriter, r *http.Request) {
-	jsonStr, err := json.Marshal(cmdlist)
+	list := Map_Get_Keys(cmdlist)
+	jsonStr, err := json.Marshal(list)
 	if err != nil {
-			fmt.Println("MapToJsonDemo err: ", err)
+			fmt.Println("ToJsonDemo err: ", err)
 	}
 	fmt.Fprintln(w, string(jsonStr))
 }

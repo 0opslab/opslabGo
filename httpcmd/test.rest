@@ -9,4 +9,4 @@ GET http://localhost:10000/httpcmdReload
 ### 执行命令
 GET http://localhost:10000/httpcmd
   ?akey=sswer
-  &item=pingbd
+  &item=ifconfig

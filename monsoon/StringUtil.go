@@ -55,7 +55,9 @@ func Reverse(s string) string{
 	return string(r)
 }
 
-func Export(v interface{}) string {
+
+// json化
+func Json(v interface{}) string {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return ""
@@ -66,11 +68,6 @@ func Export(v interface{}) string {
 		return ""
 	}
 	return buf.String()
-}
-
-// json化
-func Json(v interface{}) string {
-	return Export(v)
 }
 
 // 检测字符串是否为空

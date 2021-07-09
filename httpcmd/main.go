@@ -91,7 +91,7 @@ func main() {
 		logger.Fatalf("Failed to open log file: %v", err)
 	}
 	defer lf.Close()
-	defer logger.Init("LoggerExample", *verbose, true, lf).Close()
+	defer logger.Init("LoggerInit", *verbose, true, lf).Close()
 
 
 	http.HandleFunc("/httpcmd", httpCmd)

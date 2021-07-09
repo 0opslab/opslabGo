@@ -50,3 +50,23 @@ func GetCurrentDirectory() string {
 	//将\替换成/
 	return strings.Replace(dir, "\\", "/", -1)
 }
+
+/**
+	执行系统命令
+*/
+func RunCmd(cmd string, shell bool) string {
+	logger.Info("cmd=> ",cmd)
+	if shell {
+		out, err := exec.Command("bash", "-c", cmd).Output()
+		if err != nil {
+			logger.Info("InvalidCmd=> ",cmd)
+		}
+		return string(out)
+	} else {
+		out, err := exec.Command("cmd", "/C", cmd).Output()
+		if err != nil {
+			logger.Info("InvalidCmd=> ",cmd)
+		}
+		return string(out)
+	}
+}

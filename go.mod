@@ -10,6 +10,8 @@ replace (
 
 require (
 	github.com/PuerkitoBio/goquery v1.5.0
+	github.com/druidcaesa/gotool v0.0.0-20210820022536-52fde3f59bc4 // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-redis/redis v6.15.2+incompatible //indirect
 	github.com/gomarkdown/mdtohtml v0.0.0-20180202094705-7346712f31b4 // indirect
 	github.com/google/logger v1.0.1
@@ -18,7 +20,7 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
-	golang.org/x/text v0.3.0
+	golang.org/x/text v0.3.6
 )
 
-go 1.12
+go 1.14

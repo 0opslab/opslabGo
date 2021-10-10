@@ -24,10 +24,8 @@ package main
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -35,10 +33,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	Autngo "github.com/0opslab/autngo"
+	"github.com/fsnotify/fsnotify"
 )
 
 type ServerConfig struct {
@@ -50,94 +50,176 @@ type ServerConfig struct {
 	RYSNCADDR []string `json:'RYSNCADDR'`
 }
 
-var conf = ServerConfig{}
-
+var APP = ServerConfig{}
+var DIRPATH_INFP  []string
 func main() {
 
-	confile := flag.String("conf", "", "the configuration file")
-	flag.Parse()
-	if *confile == "" {
-		fmt.Println("Please specify the configuration file")
-		return
-	}
-	file, _ := os.Open(*confile)
-	defer file.Close()
-	decoder := json.NewDecoder(file)
+	// confile := flag.String("conf", "", "the configuration file")
+	// flag.Parse()
+	// if *confile == "" {
+	// 	fmt.Println("Please specify the configuration file")
+	// 	return
+	// }
+	// file, _ := os.Open(*confile)
+	// defer file.Close()
+	// decoder := json.NewDecoder(file)
 
-	err := decoder.Decode(&conf)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
+	// err := decoder.Decode(&APP)
+	// if err != nil {
+	// 	fmt.Println("Error:", err)
+	// 	return
+	// }
 
 	//@TODO-FORTEST
-	//var jsonstr = `{"addr":"0.0.0.0:9090","path":"c:/var/upload/www/","fileNameLength":10,
-	//	"rysncAddr":["http://localhost:9091/rsync","http://localhost:9092/rsync"]}`
-	//if err := json.Unmarshal([]byte(jsonstr), &conf); err != nil {
-	//	panic("ErrorConfig")
-	//}
+	var jsonstr = `{"addr":"0.0.0.0:9090","path":"C:/workspace/doc","fileNameLength":10,
+		"rysncAddr":["http://localhost:9091/rsync","http://localhost:9092/rsync"]}`
+	if err := json.Unmarshal([]byte(jsonstr), &APP); err != nil {
+		panic("ErrorConfig")
+	}
+	DIRPATH_INFP = GetDirPathInfo(APP.PATH)
+	watcher, err := fsnotify.NewWatcher()
+  if err != nil {
+    log.Fatal("NewWatcher failed: ", err)
+  }
+  defer watcher.Close()
+  done := make(chan bool)
+  go func() {
+    defer close(done)
+    for {
+      select {
+      case event, ok := <-watcher.Events:
+        if !ok {
+          return
+        }
+				//event.Op 时间类型
+				//CREATE
+				//REMOVE
+				//WRITE
+				//RENAME
+				//CHMOD
+        log.Printf("%s %s\n", event.Name, event.Op)
+				//if event.Op&fsnotify.Write == fsnotify.Write {
+				//只需要同步写入文件即可其实
+				ss_tem := GetDirPathInfo(APP.PATH)
+				change_list := Autngo.SliceHelper.Difference(DIRPATH_INFP, ss_tem)
+				DIRPATH_INFP = ss_tem
+				for _, v := range change_list {
+					Rsyncfile(v)
+				}
+				//}
+      case err, ok := <-watcher.Errors:
+        if !ok {
+          return
+        }
+        log.Println("error:", err)
+      }
+    }
+  }()
 
-	log.Println("Server is starting:" + conf.ADDR)
-	log.Println("Server UploadPath:" + conf.PATH)
-	log.Print("Server Rysnc Addr:" + strings.Replace(strings.Trim(fmt.Sprint(conf.RYSNCADDR), "[]"), " ", ",", -1))
+  err = watcher.Add(APP.PATH)
+  if err != nil {
+    log.Fatal("Add failed:", err)
+  }
 
-	http.HandleFunc("/upload", UploadHandler)
+	
+	log.Println("Server is starting:" + APP.ADDR)
+	log.Println("Server UploadPath:" + APP.PATH)
+	log.Print("Server Rysnc Addr:" + strings.Replace(strings.Trim(fmt.Sprint(APP.RYSNCADDR), "[]"), " ", ",", -1))
+
 	http.HandleFunc("/rsync", RsyncHandler)
-	if err := http.ListenAndServe(conf.ADDR, nil); err != nil {
+	if err := http.ListenAndServe(APP.ADDR, nil); err != nil {
 		fmt.Println("Server starting error")
 	}
+	
 }
 
-func RandomFile(path string, suffix string) (string, error) {
-	if (!IsFileExist(path)) {
-		err := os.MkdirAll(path, os.ModePerm)
-		return "", err
-	}
-	for {
-		dstFile := path + NewLenChars(conf.FILENAMELENGTH) + suffix
-		if (!IsFileExist(dstFile)) {
-			return dstFile, nil
+
+//获取目录信息
+func GetDirPathInfo(dir_path string) []string{
+	fileInfo := func(fileName string) string{
+		isdir := 1
+		mtime := int64(0)
+		fileSize := int64(0)
+		if(Autngo.FileHepler.IsFile(fileName)){
+			isdir = 0
+			mtime = Autngo.FileHepler.GetFileModTime(fileName)
+			fileSize,_ = Autngo.FileHepler.FileSize(fileName)
 		}
+		fileName = trim_pathFile(fileName)
+		result := "{\"isdir\":\"%v\",\"mtime\":\"%v\",\"fileName\":\"%v\",\"fileSize\":\"%v\"}"
+		s:= fmt.Sprintf(result, isdir,mtime,fileName,fileSize)
+		return s
 	}
+
+	//dirPath := "C:/workspace/useful-documents/doc/linux"
+	var ss []string
+	filepath.Walk(dir_path, func(filename string, fi os.FileInfo, err error) error {
+		info := fileInfo(filename)
+		ss = append(ss,info)
+		return nil
+	})
+	return ss
+
 }
 
-func IsFileExist(filename string) bool {
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return false
-	}
-	return true
+func trim_pathFile(file_name string)string {
+	re2, _ := regexp.Compile("\\\\{1,}")
+	strs := re2.ReplaceAllString(file_name, "/")
+	re3, _ := regexp.Compile("/{2,}")
+	return re3.ReplaceAllString(strs, "/")
 }
+//同步文件
+func Rsyncfile(fileInfo string){
 
-func NewLenChars(length int) string {
-	if length == 0 {
-		return ""
-	}
-	var chars = []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
-	clen := len(chars)
-	if clen < 2 || clen > 256 {
-		panic("Wrong charset length for NewLenChars()")
-	}
-	maxrb := 255 - (256 % clen)
-	b := make([]byte, length)
-	r := make([]byte, length+(length/4))
-	i := 0
-	for {
-		if _, err := rand.Read(r); err != nil {
-			panic("Error reading random bytes: " + err.Error())
-		}
-		for _, rb := range r {
-			c := int(rb)
-			if c > maxrb {
-				continue
+	fmt.Printf("RsyncFile :%v\n", fileInfo)
+	ffss := func (url string, dstPath string, files string) {
+		bodyBuffer := &bytes.Buffer{}
+		bodyWriter := multipart.NewWriter(bodyBuffer)
+		_, fileName := filepath.Split(files)
+		fileWriter, _ := bodyWriter.CreateFormFile("rsyncfile", fileName)
+
+		file, _ := os.Open(files)
+		defer file.Close()
+
+		io.Copy(fileWriter, file)
+
+		contentType := bodyWriter.FormDataContentType()
+		bodyWriter.Close()
+
+		if req, err := http.NewRequest("POST", url, bodyBuffer); err == nil {
+			req.Header.Set("Content-Type", contentType)
+			req.Header.Set("Path", base64.StdEncoding.EncodeToString([]byte(dstPath)))
+			if resp, errsp := http.DefaultClient.Do(req); errsp == nil {
+				resp_body, _ := ioutil.ReadAll(resp.Body)
+				log.Println(fmt.Sprintf("Clientrsyncfile %s %s ", resp.Status, string(resp_body)))
+			} else {
+				log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s ", url, files))
 			}
-			b[i] = chars[c%clen]
-			i++
-			if i == length {
-				return string(b)
-			}
+
+		} else {
+			log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s ", url, files))
 		}
+
 	}
+	
+	var mapResult map[string]interface{}
+	err := json.Unmarshal([]byte(fileInfo), &mapResult)
+	if err != nil {
+		fmt.Println("JsonToMapDemo err: ", err)
+	}
+	fileName := fmt.Sprintf("%v",mapResult["fileName"])
+	upload_pathfile := strings.Replace(fileName, APP.PATH,"", 1)
+	fmt.Println(fileName,"======>",upload_pathfile)
+
+
+	for _, v := range APP.RYSNCADDR {
+		//fmt.Printf("RsyncFile :%v  %v\n",v, fileInfo)
+		go ffss(v, upload_pathfile, fileName)
+	}
+	
 }
+
+
 
 func getCurrentIP(r http.Request) (string) {
 	ip := r.Header.Get("X-Real-IP")
@@ -149,7 +231,6 @@ func getCurrentIP(r http.Request) (string) {
 
 func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("rsyncfile")
-	defer file.Close()
 	if err != nil {
 		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "FormParseError"))
 		res := fmt.Sprintf("{'code':'error'}")
@@ -157,8 +238,10 @@ func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, res)
 		return
 	}
-	dstFile := conf.PATH + header.Filename
-	if IsFileExist(dstFile) {
+	defer file.Close()
+
+	dstFile := APP.PATH + r.Header.Get("Path")
+	if Autngo.FileHepler.FileIsExist(dstFile) {
 		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "FileExists"))
 		res := fmt.Sprintf("{'code':'error'}")
 		w.Header().Add("Content-Type", "application/json;charset:utf-8;")
@@ -167,7 +250,6 @@ func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cur, err := os.Create(dstFile);
-	defer cur.Close()
 	if err != nil {
 		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "CreateError"))
 		res := fmt.Sprintf("{'code':'error'}")
@@ -175,6 +257,7 @@ func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, res)
 		return
 	}
+	defer cur.Close()
 
 	res := fmt.Sprintf("{'code':'error'}")
 	loginfo := ""
@@ -191,95 +274,6 @@ func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, res)
 }
 
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	// 实现多文件接收
-	//上传结果以以json格式返回
-	uploadPath := r.Header.Get("Path")
-	basePath := conf.PATH
 
-	re2, _ := regexp.Compile("\\.{2,}")
-	re3, _ := regexp.Compile("/{2,}")
 
-	if uploadPath != "" {
-		if decodeBytes, err := base64.StdEncoding.DecodeString(uploadPath); err == nil {
-			ppath := string(decodeBytes)
-			ppath = re3.ReplaceAllString(re2.ReplaceAllString(ppath, ""), "/")
-			uploadPath = ppath
-			basePath += "/" + ppath
-		}
-	}
-	if (!strings.HasSuffix(basePath, "/")) {
-		basePath += "/"
-	}
 
-	basePath = re3.ReplaceAllString(basePath, "/")
-
-	bastPathLen := len(conf.PATH) - 1
-	reader, err := r.MultipartReader()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	s := ""
-	res := "success"
-	for {
-		part, err := reader.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if newfile, err := RandomFile(basePath, path.Ext(part.FileName())); err == nil {
-			if part.FileName() != "" {
-				dst, _ := os.Create(newfile)
-				defer dst.Close()
-				io.Copy(dst, part)
-				newFileName := string([]byte(newfile)[bastPathLen:])
-				log.Println(fmt.Sprintf("%s uploadfile [%s][%s] > %s", getCurrentIP(*r),
-					part.FormName(), part.FileName(), newfile))
-				s += fmt.Sprintf("%s@%s:'%s',", part.FormName(), part.FileName(), newFileName)
-				for _, v := range conf.RYSNCADDR {
-					go Rsync(v, uploadPath, newfile)
-				}
-			}
-		} else {
-			log.Println(fmt.Sprintf("%s uploadfile [%s][%s] CreateDestinationFileError", getCurrentIP(*r),
-				part.FormName(), part.FileName(), newfile))
-			s += fmt.Sprintf("%s@%s:'%s',", part.FormName(), part.FileName())
-			res = "error"
-		}
-	}
-	w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-	fmt.Fprintf(w, fmt.Sprintf("{'code':'%s',results:{%s}}", res, strings.Trim(s, ",")))
-}
-
-func Rsync(url string, dstPath string, files string) {
-	bodyBuffer := &bytes.Buffer{}
-	bodyWriter := multipart.NewWriter(bodyBuffer)
-	_, fileName := filepath.Split(files)
-	fileWriter, _ := bodyWriter.CreateFormFile("rsyncfile", fileName)
-
-	file, _ := os.Open(files)
-	defer file.Close()
-
-	io.Copy(fileWriter, file)
-
-	contentType := bodyWriter.FormDataContentType()
-	bodyWriter.Close()
-
-	if req, err := http.NewRequest("POST", url, bodyBuffer); err == nil {
-		req.Header.Set("Content-Type", contentType)
-		if dstPath != "" {
-			req.Header.Set("Path", base64.StdEncoding.EncodeToString([]byte(dstPath)))
-		}
-		if resp, errsp := http.DefaultClient.Do(req); errsp == nil {
-			resp_body, _ := ioutil.ReadAll(resp.Body)
-			log.Println(fmt.Sprintf("Clientrsyncfile %s %s ", resp.Status, string(resp_body)))
-		} else {
-			log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s ", url, files))
-		}
-
-	} else {
-		log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s ", url, files))
-	}
-
-}

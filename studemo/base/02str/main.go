@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"math/rand"
 	"crypto/md5"
 	"encoding/hex"
-	
-
+	"fmt"
+	"math/rand"
+	"regexp"
 )
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -66,10 +65,20 @@ func MD5(text string) string{
 	return hex.EncodeToString(ctx.Sum(nil))
 }
 
+func trim_pathFile(file_name string)string {
+	re2, _ := regexp.Compile("\\\\{1,}")
+	return re2.ReplaceAllString(file_name, "/")
+}
+
+
 func main() {
 	for a :=0; a < 10 ; a++  {
 		//fmt.Println(RandStringBytes(10))
 		s := NewLenChars(20, StdChars)
 		fmt.Println(s,"=>",MD5(s))
 	}
+	fmt.Println(trim_pathFile("C:\\workspace\\doc\\txt\\1234 1234.txt"))
+	fmt.Println(trim_pathFile("C:\\workspace\\\\\\\\\\doc\\txt\\1234 1234.txt"))
+	
+
 }

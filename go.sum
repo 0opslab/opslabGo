@@ -1,3 +1,5 @@
+github.com/0opslab/autngo v0.0.0-20211008123934-41ea5435b671 h1:dPZQ6z1LCKa5V7YwzqB63NPf6qlgAGTf7kvUzZSxmko=
+github.com/0opslab/autngo v0.0.0-20211008123934-41ea5435b671/go.mod h1:WJx93sne1IWiOEXsiGreNCvuemKyRo+fLotWvhZ5q8Q=
 github.com/PuerkitoBio/goquery v1.5.0 h1:uGvmFXOA73IKluu/F84Xd1tt/z07GYm8X49XKHP7EJk=
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
 github.com/andybalholm/cascadia v1.0.0 h1:hOCXnnZ5A+3eVDX8pvgl4kofXv2ELss0bKcqRySc45o=

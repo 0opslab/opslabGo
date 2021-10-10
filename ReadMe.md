@@ -56,10 +56,14 @@ vet: 运行go tool vet
 ```
 
 
+## go代码添加版本
+通过使用版本标签来发布1.0.0版本：
+git tag v1.0.0
+git push --tags
+此时将会在Github的仓库上创建名为v1.0.0的标签。推荐的做法是创建新的代码分支，这样可以直接在分支上修改v1.0.0的问题，而不影响主分支的开发进度。
 
-
-
-
+git checkout -b v1
+git push -u origin v1
 
 
 

@@ -9,6 +9,7 @@ replace (
 )
 
 require (
+	github.com/0opslab/autngo v0.0.0-20211008123934-41ea5435b671 // indirect
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/druidcaesa/gotool v0.0.0-20210820022536-52fde3f59bc4 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -20,7 +21,7 @@ require (
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.3.7
 )
 
 go 1.14

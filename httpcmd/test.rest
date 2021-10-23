@@ -1,7 +1,12 @@
 ### 测试
+GET http://localhost:10000/httpcmdList
+
+
+### 重新加载配置
+GET http://localhost:10000/httpcmdReload
+
+
+### 执行命令
 GET http://localhost:10000/httpcmd
   ?akey=sswer
-  &item=pingbd
-
-###
-
+  &item=ifconfig

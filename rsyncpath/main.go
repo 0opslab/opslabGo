@@ -24,7 +24,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,7 +33,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	Autngo "github.com/0opslab/autngo"
@@ -46,12 +44,17 @@ type ServerConfig struct {
 	ADDR string `json:'ADDR'`
 	//文件写入路径
 	PATH string `json:'PATH'`
+	//模式 server(接受同步文件模式) client(监控指定目录并将变化同步至server模式主机下)
+	MODE string `json:'MODE'`
 	//同步的地址
 	RYSNCADDR []string `json:'RYSNCADDR'`
 }
 
 var APP = ServerConfig{}
 var DIRPATH_INFP  []string
+var STATUS_SUCCESS = 10000
+var STATUS_FAIL = 10001
+
 func main() {
 
 	// confile := flag.String("conf", "", "the configuration file")
@@ -71,61 +74,74 @@ func main() {
 	// }
 
 	//@TODO-FORTEST
-	var jsonstr = `{"addr":"0.0.0.0:9090","path":"C:/workspace/doc","fileNameLength":10,
-		"rysncAddr":["http://localhost:9091/rsync","http://localhost:9092/rsync"]}`
+	// var jsonstr = `{"addr":"0.0.0.0:9090","path":"C:/workspace/doc1","mode":"server",
+	// 	"rysncAddr":["http://localhost:9091/rsync"]}`
+
+	var jsonstr = `{"addr":"0.0.0.0:9091","path":"C:/workspace/doc","mode":"client",
+		"rysncAddr":["http://localhost:9090/rsync"]}`
 	if err := json.Unmarshal([]byte(jsonstr), &APP); err != nil {
 		panic("ErrorConfig")
 	}
-	DIRPATH_INFP = GetDirPathInfo(APP.PATH)
-	watcher, err := fsnotify.NewWatcher()
-  if err != nil {
-    log.Fatal("NewWatcher failed: ", err)
-  }
-  defer watcher.Close()
-  done := make(chan bool)
-  go func() {
-    defer close(done)
-    for {
-      select {
-      case event, ok := <-watcher.Events:
-        if !ok {
-          return
-        }
-				//event.Op 时间类型
-				//CREATE
-				//REMOVE
-				//WRITE
-				//RENAME
-				//CHMOD
-        log.Printf("%s %s\n", event.Name, event.Op)
-				//if event.Op&fsnotify.Write == fsnotify.Write {
-				//只需要同步写入文件即可其实
-				ss_tem := GetDirPathInfo(APP.PATH)
-				change_list := Autngo.SliceHelper.Difference(DIRPATH_INFP, ss_tem)
-				DIRPATH_INFP = ss_tem
-				for _, v := range change_list {
-					Rsyncfile(v)
-				}
-				//}
-      case err, ok := <-watcher.Errors:
-        if !ok {
-          return
-        }
-        log.Println("error:", err)
-      }
-    }
-  }()
 
-  err = watcher.Add(APP.PATH)
-  if err != nil {
-    log.Fatal("Add failed:", err)
-  }
-
+	if APP.MODE == "client"{
+		DIRPATH_INFP = GetDirPathInfo(APP.PATH)
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			log.Fatal("NewWatcher failed: ", err)
+		}
+		defer watcher.Close()
+		done := make(chan bool)
+		go func() {
+			defer close(done)
+			for {
+				select {
+				case event, ok := <-watcher.Events:
+					if !ok {
+						return
+					}
+					//event.Op 时间类型
+					//CREATE
+					//REMOVE
+					//WRITE
+					//RENAME
+					//CHMOD
+					if event.Op&fsnotify.Write == fsnotify.Write {
+						//log.Printf("%s %s\n", event.Name, event.Op)
+						//只需要同步写入文件即可其实
+						ss_tem := GetDirPathInfo(APP.PATH)
+						change_list := Autngo.SliceHelper.Difference(ss_tem,DIRPATH_INFP)
+						DIRPATH_INFP = ss_tem
+						for _, v := range change_list {
+							//go Rsyncfile(v)
+							var mapResult map[string]interface{}
+							err := json.Unmarshal([]byte(v), &mapResult)
+							if err != nil {
+								fmt.Println("JsonToMapDemo err: ", err)
+							}
+							fileName := fmt.Sprintf("%v",mapResult["fileName"])
+							upload_pathfile := strings.Replace(fileName, APP.PATH,"", 1)
 	
-	log.Println("Server is starting:" + APP.ADDR)
-	log.Println("Server UploadPath:" + APP.PATH)
+							for _, v := range APP.RYSNCADDR {
+								go Rsyncfile(v, upload_pathfile, fileName)
+							}
+						}
+					}
+				case err, ok := <-watcher.Errors:
+					if !ok {
+						return
+					}
+					log.Println("error:", err)
+				}
+			}
+		}()
+		err = watcher.Add(APP.PATH)
+		if err != nil {
+			log.Fatal("Add failed:", err)
+		}
+	}
+	
+	log.Println("Server is starting:",APP.ADDR,"\tServer-UploadPath:",APP.PATH)
 	log.Print("Server Rysnc Addr:" + strings.Replace(strings.Trim(fmt.Sprint(APP.RYSNCADDR), "[]"), " ", ",", -1))
-
 	http.HandleFunc("/rsync", RsyncHandler)
 	if err := http.ListenAndServe(APP.ADDR, nil); err != nil {
 		fmt.Println("Server starting error")
@@ -133,46 +149,10 @@ func main() {
 	
 }
 
-
-//获取目录信息
-func GetDirPathInfo(dir_path string) []string{
-	fileInfo := func(fileName string) string{
-		isdir := 1
-		mtime := int64(0)
-		fileSize := int64(0)
-		if(Autngo.FileHepler.IsFile(fileName)){
-			isdir = 0
-			mtime = Autngo.FileHepler.GetFileModTime(fileName)
-			fileSize,_ = Autngo.FileHepler.FileSize(fileName)
-		}
-		fileName = trim_pathFile(fileName)
-		result := "{\"isdir\":\"%v\",\"mtime\":\"%v\",\"fileName\":\"%v\",\"fileSize\":\"%v\"}"
-		s:= fmt.Sprintf(result, isdir,mtime,fileName,fileSize)
-		return s
-	}
-
-	//dirPath := "C:/workspace/useful-documents/doc/linux"
-	var ss []string
-	filepath.Walk(dir_path, func(filename string, fi os.FileInfo, err error) error {
-		info := fileInfo(filename)
-		ss = append(ss,info)
-		return nil
-	})
-	return ss
-
-}
-
-func trim_pathFile(file_name string)string {
-	re2, _ := regexp.Compile("\\\\{1,}")
-	strs := re2.ReplaceAllString(file_name, "/")
-	re3, _ := regexp.Compile("/{2,}")
-	return re3.ReplaceAllString(strs, "/")
-}
 //同步文件
-func Rsyncfile(fileInfo string){
-
-	fmt.Printf("RsyncFile :%v\n", fileInfo)
-	ffss := func (url string, dstPath string, files string) {
+func Rsyncfile(url string, dstPath string, files string){
+		info := fmt.Sprintf("RsyncFile :%v path:%v",url,dstPath)
+		log.Print(info)
 		bodyBuffer := &bytes.Buffer{}
 		bodyWriter := multipart.NewWriter(bodyBuffer)
 		_, fileName := filepath.Split(files)
@@ -188,90 +168,78 @@ func Rsyncfile(fileInfo string){
 
 		if req, err := http.NewRequest("POST", url, bodyBuffer); err == nil {
 			req.Header.Set("Content-Type", contentType)
-			req.Header.Set("Path", base64.StdEncoding.EncodeToString([]byte(dstPath)))
+			req.Header.Set("Path", Autngo.StringHelper.Base64Encode(dstPath))
 			if resp, errsp := http.DefaultClient.Do(req); errsp == nil {
 				resp_body, _ := ioutil.ReadAll(resp.Body)
 				log.Println(fmt.Sprintf("Clientrsyncfile %s %s ", resp.Status, string(resp_body)))
 			} else {
-				log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s ", url, files))
+				log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s %v", url, files,errsp))
 			}
-
 		} else {
-			log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s ", url, files))
+			log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s %v", url, files,err))
 		}
+}
 
+//获取目录信息
+func GetDirPathInfo(dir_path string) []string{
+	fileInfo := func(fileName string) string{
+		fileSize := int64(0)
+		mtime := Autngo.FileHepler.GetFileModTime(fileName)
+		fileSize,_ = Autngo.FileHepler.FileSize(fileName)
+		fileName = Autngo.FileHepler.TrimPathFile(fileName)
+		result := "{\"mtime\":\"%v\",\"fileName\":\"%v\",\"fileSize\":\"%v\"}"
+		s:= fmt.Sprintf(result,mtime,fileName,fileSize)
+		return s
 	}
-	
-	var mapResult map[string]interface{}
-	err := json.Unmarshal([]byte(fileInfo), &mapResult)
-	if err != nil {
-		fmt.Println("JsonToMapDemo err: ", err)
-	}
-	fileName := fmt.Sprintf("%v",mapResult["fileName"])
-	upload_pathfile := strings.Replace(fileName, APP.PATH,"", 1)
-	fmt.Println(fileName,"======>",upload_pathfile)
-
-
-	for _, v := range APP.RYSNCADDR {
-		//fmt.Printf("RsyncFile :%v  %v\n",v, fileInfo)
-		go ffss(v, upload_pathfile, fileName)
-	}
-	
+	var ss []string
+	filepath.Walk(dir_path, func(filename string, fi os.FileInfo, err error) error {
+		if(Autngo.FileHepler.IsFile(filename)){
+			info := fileInfo(filename)
+			ss = append(ss,info)
+		}
+		return nil
+	})
+	return ss
 }
 
 
-
-func getCurrentIP(r http.Request) (string) {
-	ip := r.Header.Get("X-Real-IP")
-	if ip == "" {
-		return r.RemoteAddr
-	}
-	return ip
-}
-
+//处理同步文件
 func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("rsyncfile")
 	if err != nil {
-		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "FormParseError"))
-		res := fmt.Sprintf("{'code':'error'}")
-		w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-		fmt.Fprintf(w, res)
+		Autngo.HttpHelper.HttpResponseCode(w, STATUS_FAIL,"FormParseError")
 		return
 	}
 	defer file.Close()
 
-	dstFile := APP.PATH + r.Header.Get("Path")
-	if Autngo.FileHepler.FileIsExist(dstFile) {
-		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "FileExists"))
-		res := fmt.Sprintf("{'code':'error'}")
-		w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-		fmt.Fprintf(w, res)
-		return
+	dstFile := Autngo.FileHepler.TrimPathFile(APP.PATH + Autngo.StringHelper.Base64Decode(r.Header.Get("Path")))
+	log.Println(fmt.Sprintf("%s rsyncfile  %s", Autngo.HttpHelper.GetRemoteIP(r), dstFile))
+	dirpath := filepath.Dir(dstFile)
+	if !Autngo.FileHepler.FileIsExist(dirpath) {
+		if err := os.MkdirAll(dirpath, os.ModePerm); err != nil {
+			Autngo.HttpHelper.HttpResponseCodeData(w,STATUS_FAIL,"CreateFile",dstFile)
+			return
+		}
 	}
-
 	cur, err := os.Create(dstFile);
 	if err != nil {
-		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "CreateError"))
-		res := fmt.Sprintf("{'code':'error'}")
-		w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-		fmt.Fprintf(w, res)
+		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", Autngo.HttpHelper.GetRemoteIP(r), header.Filename, "CreateError"))
+		Autngo.HttpHelper.HttpResponseCodeData(w,STATUS_FAIL,"CreateError",dstFile)
 		return
 	}
 	defer cur.Close()
 
-	res := fmt.Sprintf("{'code':'error'}")
-	loginfo := ""
+	res := STATUS_FAIL
+	result :="error"
 	_, erro := io.Copy(cur, file)
 	if erro != nil {
-		loginfo = fmt.Sprintf("%s rsyncfile %s  %s", getCurrentIP(*r), header.Filename, "WriteError")
+		result = "WriteError"
 	} else {
-		loginfo = fmt.Sprintf("%s rsyncfile %s  %s", getCurrentIP(*r), header.Filename, "RysncSuccess")
-		res = fmt.Sprintf("{'code':'success'}")
-
+		result ="RysncSuccess"
+		res = STATUS_SUCCESS
 	}
-	log.Println(loginfo)
-	w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-	fmt.Fprintf(w, res)
+	log.Println(fmt.Sprintf("%s rsyncfile %s  %s", Autngo.HttpHelper.GetRemoteIP(r), header.Filename, result))
+	Autngo.HttpHelper.HttpResponseCode(w,res,result)
 }
 
 

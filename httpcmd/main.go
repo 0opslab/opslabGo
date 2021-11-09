@@ -118,7 +118,7 @@ func httpCmd(w http.ResponseWriter, r *http.Request) {
 	key := r.Form.Get("key")
 	item := r.Form.Get("item")
 
-	logger.info("httpCmdRun =>",item)
+	logger.Info("httpCmdRun =>",item)
 	responseBody := "Invalid request"
 	//通过简单的md5校验实现简单层面的安全控制
 	timeStr:=time.Now().Format("2006010215")

@@ -9,7 +9,6 @@ replace (
 )
 
 require (
-	github.com/0opslab/autngo v1.0.4 // indirect
 	github.com/PuerkitoBio/goquery v1.5.0
 	github.com/druidcaesa/gotool v0.0.0-20210820022536-52fde3f59bc4 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect

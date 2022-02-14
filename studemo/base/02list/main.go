@@ -22,6 +22,6 @@ func main() {
 	ll.Remove(second)
 
 	for i := ll.Front(); i != nil; i = i.Next() {
-    fmt.Println(i.Value)
+		fmt.Println(i.Value)
 	}
 }

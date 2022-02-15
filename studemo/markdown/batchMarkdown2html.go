@@ -1,16 +1,16 @@
 package main
 
 import (
-	"fmt"
-	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
-	"golang.org/x/net/html"
 	"io/ioutil"
 	"log"
 	"strings"
+
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/russross/blackfriday"
+	"golang.org/x/net/html"
 )
 
-func markdownFile2html(fileName string) string{
+func markdownFile2html(fileName string) string {
 	content, fileErr := ioutil.ReadFile(fileName)
 	if fileErr != nil {
 		panic("ReadConfigFileError")
@@ -21,7 +21,7 @@ func markdownFile2html(fileName string) string{
 	return string(htmlContent)
 }
 
-func parseHtml(n *html.Node) map[string]string{
+func parseHtml(n *html.Node) map[string]string {
 	set := map[string]string{}
 	//switch n.Type {
 	//case html.ErrorNode:
@@ -38,13 +38,15 @@ func parseHtml(n *html.Node) map[string]string{
 	//case html.DoctypeNode:
 	//	log.Printf(n.Data)
 	//}
-	if n.Type == html.ElementNode{
+	if n.Type == html.ElementNode {
 		var tt = n.Data
-		if strings.HasSuffix(tt,">") && strings.HasPrefix(tt,"<"){
+		if strings.HasSuffix(tt, ">") && strings.HasPrefix(tt, "<") {
 			set[n.Data] = n.Data
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
 				set1 := parseHtml(c)
-				for k ,v := range set1 { set[k] = v }
+				for k, v := range set1 {
+					set[k] = v
+				}
 			}
 		}
 	}
@@ -52,7 +54,7 @@ func parseHtml(n *html.Node) map[string]string{
 
 }
 
-func getHtmlTag(htmlContent string) map[string]string{
+func getHtmlTag(htmlContent string) map[string]string {
 	doc, err := html.Parse(strings.NewReader(htmlContent))
 	if err != nil {
 		log.Panic(err)
@@ -61,13 +63,11 @@ func getHtmlTag(htmlContent string) map[string]string{
 	return set
 }
 
-
-
-func main() {
-	markdownHtml  :=  markdownFile2html("C:\\workspace\\useful-documents\\db\\dba-command.md")
-	fmt.Println(markdownHtml)
-	set := getHtmlTag(markdownHtml)
-	for key := range  set{
-		fmt.Println(key)
-	}
-}
+// func main() {
+// 	markdownHtml  :=  markdownFile2html("C:\\workspace\\useful-documents\\db\\dba-command.md")
+// 	fmt.Println(markdownHtml)
+// 	set := getHtmlTag(markdownHtml)
+// 	for key := range  set{
+// 		fmt.Println(key)
+// 	}
+// }

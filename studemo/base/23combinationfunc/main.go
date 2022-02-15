@@ -1,7 +1,9 @@
 package main
 
-import "strings"
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 //go中不支持不支持泛型，
 //当你的程序或者数据类型需要时，
@@ -36,8 +38,8 @@ func index(vs []string, t string) int {
 }
 
 //在目标字符串t在切片中返回true
-func Include(vs []string, t string) bool {
-	return Index(vs, t) >= 0
+func include(vs []string, t string) bool {
+	return index(vs, t) >= 0
 }
 
 //如果这些切片中的字符串有一个满足条件 f 则返回true。

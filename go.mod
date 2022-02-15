@@ -9,17 +9,22 @@ replace (
 )
 
 require (
+	github.com/0opslab/autngo v1.0.6 // indirect
 	github.com/PuerkitoBio/goquery v1.5.0
+	github.com/chris-ramon/douceur v0.2.0 // indirect
 	github.com/druidcaesa/gotool v0.0.0-20210820022536-52fde3f59bc4 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-redis/redis v6.15.2+incompatible //indirect
 	github.com/gomarkdown/mdtohtml v0.0.0-20180202094705-7346712f31b4 // indirect
 	github.com/google/logger v1.0.1
 	github.com/gookit/color v1.3.2 // indirect
-	github.com/microcosm-cc/bluemonday v1.0.4 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.18 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/text v0.3.7
 )
 

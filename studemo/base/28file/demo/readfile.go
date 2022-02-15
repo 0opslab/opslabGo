@@ -2,22 +2,22 @@ package demo
 
 var prose_list []string
 
-func main() {
-	prose_list = make([]string, 0)
-	f, err := os.Open("c:/data.json")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	rd := bufio.NewReader(f)
-	for {
-		line, err := rd.ReadString('\n')
-		if err != nil || io.EOF == err {
-			break
-		}
-		fmt.Println(line)
-	}
-}
+// func main() {
+// 	prose_list = make([]string, 0)
+// 	f, err := os.Open("c:/data.json")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer f.Close()
+// 	rd := bufio.NewReader(f)
+// 	for {
+// 		line, err := rd.ReadString('\n')
+// 		if err != nil || io.EOF == err {
+// 			break
+// 		}
+// 		fmt.Println(line)
+// 	}
+// }
 //
 //	fmt.Println("===========")
 //	fi, err := os.Open("c:/data.json")

@@ -1,14 +1,14 @@
 package main
 
-import "fmt"
 import (
-	"os"
 	"bufio"
-	"io/ioutil"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"opslabGo/studemo/base/28file/demo"
+	"opslabGo/studemo/base/28file/funcs"
+	"os"
 	"path/filepath"
-	"opslabgo/stu/28file/funcs"
-	"opslabgo/stu/28file/demo"
 )
 
 func main() {
@@ -51,8 +51,6 @@ func main() {
 	}
 	fmt.Println("file content:", str)
 
-
-
 	//遍历目录
 	file_list("/local/workspace/opslabGo/data/")
 
@@ -67,8 +65,8 @@ func main() {
 }
 
 /**
- 写文件
- */
+写文件
+*/
 func write(file_name string) error {
 	fout, err := os.Create(file_name)
 	defer fout.Close()
@@ -85,7 +83,7 @@ func write(file_name string) error {
 }
 
 func writeString(file_name string) {
-	file, err := os.OpenFile(file_name, os.O_CREATE | os.O_WRONLY, 0755)
+	file, err := os.OpenFile(file_name, os.O_CREATE|os.O_WRONLY, 0755)
 	if err != nil {
 		fmt.Println("error", err)
 		return
@@ -98,11 +96,12 @@ func writeString(file_name string) {
 	}
 	fileWriter.Flush()
 }
+
 /**
- 读文件
- */
+读文件
+*/
 func readAll(file_name string) (string, error) {
-	file, err := os.OpenFile(file_name, os.O_CREATE | os.O_RDWR, 0666)
+	file, err := os.OpenFile(file_name, os.O_CREATE|os.O_RDWR, 0666)
 	if nil == err {
 		defer file.Close()
 
@@ -163,7 +162,7 @@ func copyFile(src_file_name string, dst_file_name string) (writeen int64, err er
 	}
 	defer src.Close()
 
-	dst, err := os.OpenFile(dst_file_name, os.O_CREATE | os.O_WRONLY, 0644)
+	dst, err := os.OpenFile(dst_file_name, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return -1, err
 	}
@@ -173,11 +172,11 @@ func copyFile(src_file_name string, dst_file_name string) (writeen int64, err er
 }
 
 /**
- 遍历文件夹
- */
+遍历文件夹
+*/
 func file_list(path string) {
 	err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-		if (f == nil) {
+		if f == nil {
 			return err
 		}
 		if f.IsDir() {

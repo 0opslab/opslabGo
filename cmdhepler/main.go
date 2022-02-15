@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gookit/color"
 	"io/ioutil"
-	"opslabGo/monsoon"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
+
+	"github.com/0opslab/autngo"
+	"github.com/gookit/color"
 )
 
 type HelperConfig struct {
@@ -40,7 +41,7 @@ type HelperConfig struct {
 var App = HelperConfig{}
 
 //创建并加载配置文件
-func createLoadConfFile(v interface{}) error{
+func createLoadConfFile(v interface{}) error {
 	sysType := runtime.GOOS
 	jsonConfigFile := ""
 	if sysType == "linux" {
@@ -49,7 +50,7 @@ func createLoadConfFile(v interface{}) error{
 	if sysType == "windows" {
 		jsonConfigFile = "C:/windows/cmdhelp.conf"
 	}
-	if !monsoon.FileIsExist(jsonConfigFile) {
+	if !autngo.FileHepler.FileIsExist(jsonConfigFile) {
 		content := `{
     		"addr":"0.0.0.0:9090",
 			"path":"c:/var/upload/wwww/",
@@ -69,7 +70,7 @@ func createLoadConfFile(v interface{}) error{
 				"h6_bg":"FF0000"
 			}
 		}`
-		monsoon.WriteString(jsonConfigFile, content)
+		autngo.FileHepler.WriteString(jsonConfigFile, content)
 		err := json.Unmarshal([]byte("content"), &v)
 		return err
 	} else {
@@ -84,7 +85,7 @@ func createLoadConfFile(v interface{}) error{
 
 func main() {
 	err := createLoadConfFile(&App)
-	if err != nil{
+	if err != nil {
 		color.Red.Println("ReadConfigFileError")
 		return
 	}
@@ -99,11 +100,10 @@ func main() {
 	//}
 	//color_print(string(fileContent))
 
-
 	cmdPath := "/data/workspace/useful-command"
 	for i, v := range os.Args {
 		if i > 0 {
-			files, _, _ := monsoon.WalkDirFiles(cmdPath, "md")
+			files, _, _ := autngo.FileHepler.WalkDirFiles(cmdPath, "md")
 			for _, file := range files {
 				if strings.ToLower(TrimFile(file)) == strings.ToLower(v) {
 					fileContent, err := ioutil.ReadFile(file)
@@ -201,20 +201,17 @@ func color_print(content string) {
 	}
 }
 
-
 //@func 利用正则表达式压缩字符串，去除空格或制表符匹配一个或多个空白符的正则表达式
 func trimStr(strs string) string {
 	return strings.Trim(strings.Trim(strings.Trim(strs, " "), "\n"), "\r")
 }
 
-
 //@func 删除行收的助手符号# 和 /
 func delComment(strs string) string {
 	re3, _ := regexp.Compile("(^#{1,})|(^/{1,})")
-	rep := re3.ReplaceAllString(strs, "");
+	rep := re3.ReplaceAllString(strs, "")
 	return trimStr(rep)
 }
-
 
 //@func 获取文件名
 func TrimFile(fullFilename string) string {

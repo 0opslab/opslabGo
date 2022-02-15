@@ -51,7 +51,7 @@ type ServerConfig struct {
 }
 
 var APP = ServerConfig{}
-var DIRPATH_INFP  []string
+var DIRPATH_INFP []string
 var STATUS_SUCCESS = 10000
 var STATUS_FAIL = 10001
 
@@ -83,7 +83,7 @@ func main() {
 		panic("ErrorConfig")
 	}
 
-	if APP.MODE == "client"{
+	if APP.MODE == "client" {
 		DIRPATH_INFP = GetDirPathInfo(APP.PATH)
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
@@ -109,7 +109,7 @@ func main() {
 						//log.Printf("%s %s\n", event.Name, event.Op)
 						//只需要同步写入文件即可其实
 						ss_tem := GetDirPathInfo(APP.PATH)
-						change_list := Autngo.SliceHelper.Difference(ss_tem,DIRPATH_INFP)
+						change_list := Autngo.SliceHelper.Difference(ss_tem, DIRPATH_INFP)
 						DIRPATH_INFP = ss_tem
 						for _, v := range change_list {
 							//go Rsyncfile(v)
@@ -118,9 +118,9 @@ func main() {
 							if err != nil {
 								fmt.Println("JsonToMapDemo err: ", err)
 							}
-							fileName := fmt.Sprintf("%v",mapResult["fileName"])
-							upload_pathfile := strings.Replace(fileName, APP.PATH,"", 1)
-	
+							fileName := fmt.Sprintf("%v", mapResult["fileName"])
+							upload_pathfile := strings.Replace(fileName, APP.PATH, "", 1)
+
 							for _, v := range APP.RYSNCADDR {
 								go Rsyncfile(v, upload_pathfile, fileName)
 							}
@@ -139,75 +139,74 @@ func main() {
 			log.Fatal("Add failed:", err)
 		}
 	}
-	
-	log.Println("Server is starting:",APP.ADDR,"\tServer-UploadPath:",APP.PATH)
+
+	log.Println("Server is starting:", APP.ADDR, "\tServer-UploadPath:", APP.PATH)
 	log.Print("Server Rysnc Addr:" + strings.Replace(strings.Trim(fmt.Sprint(APP.RYSNCADDR), "[]"), " ", ",", -1))
 	http.HandleFunc("/rsync", RsyncHandler)
 	if err := http.ListenAndServe(APP.ADDR, nil); err != nil {
 		fmt.Println("Server starting error")
 	}
-	
+
 }
 
 //同步文件
-func Rsyncfile(url string, dstPath string, files string){
-		info := fmt.Sprintf("RsyncFile :%v path:%v",url,dstPath)
-		log.Print(info)
-		bodyBuffer := &bytes.Buffer{}
-		bodyWriter := multipart.NewWriter(bodyBuffer)
-		_, fileName := filepath.Split(files)
-		fileWriter, _ := bodyWriter.CreateFormFile("rsyncfile", fileName)
+func Rsyncfile(url string, dstPath string, files string) {
+	info := fmt.Sprintf("RsyncFile :%v path:%v", url, dstPath)
+	log.Print(info)
+	bodyBuffer := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuffer)
+	_, fileName := filepath.Split(files)
+	fileWriter, _ := bodyWriter.CreateFormFile("rsyncfile", fileName)
 
-		file, _ := os.Open(files)
-		defer file.Close()
+	file, _ := os.Open(files)
+	defer file.Close()
 
-		io.Copy(fileWriter, file)
+	io.Copy(fileWriter, file)
 
-		contentType := bodyWriter.FormDataContentType()
-		bodyWriter.Close()
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
 
-		if req, err := http.NewRequest("POST", url, bodyBuffer); err == nil {
-			req.Header.Set("Content-Type", contentType)
-			req.Header.Set("Path", Autngo.StringHelper.Base64Encode(dstPath))
-			if resp, errsp := http.DefaultClient.Do(req); errsp == nil {
-				resp_body, _ := ioutil.ReadAll(resp.Body)
-				log.Println(fmt.Sprintf("Clientrsyncfile %s %s ", resp.Status, string(resp_body)))
-			} else {
-				log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s %v", url, files,errsp))
-			}
+	if req, err := http.NewRequest("POST", url, bodyBuffer); err == nil {
+		req.Header.Set("Content-Type", contentType)
+		req.Header.Set("Path", Autngo.StringHelper.Base64Encode(dstPath))
+		if resp, errsp := http.DefaultClient.Do(req); errsp == nil {
+			resp_body, _ := ioutil.ReadAll(resp.Body)
+			log.Println(fmt.Sprintf("Clientrsyncfile %s %s ", resp.Status, string(resp_body)))
 		} else {
-			log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s %v", url, files,err))
+			log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s %v", url, files, errsp))
 		}
+	} else {
+		log.Println(fmt.Sprintf("Clientrsyncfile Error %s %s %v", url, files, err))
+	}
 }
 
 //获取目录信息
-func GetDirPathInfo(dir_path string) []string{
-	fileInfo := func(fileName string) string{
+func GetDirPathInfo(dir_path string) []string {
+	fileInfo := func(fileName string) string {
 		fileSize := int64(0)
 		mtime := Autngo.FileHepler.GetFileModTime(fileName)
-		fileSize,_ = Autngo.FileHepler.FileSize(fileName)
+		fileSize, _ = Autngo.FileHepler.FileSize(fileName)
 		fileName = Autngo.FileHepler.TrimPathFile(fileName)
 		result := "{\"mtime\":\"%v\",\"fileName\":\"%v\",\"fileSize\":\"%v\"}"
-		s:= fmt.Sprintf(result,mtime,fileName,fileSize)
+		s := fmt.Sprintf(result, mtime, fileName, fileSize)
 		return s
 	}
 	var ss []string
 	filepath.Walk(dir_path, func(filename string, fi os.FileInfo, err error) error {
-		if(Autngo.FileHepler.IsFile(filename)){
+		if Autngo.FileHepler.IsFile(filename) {
 			info := fileInfo(filename)
-			ss = append(ss,info)
+			ss = append(ss, info)
 		}
 		return nil
 	})
 	return ss
 }
 
-
 //处理同步文件
 func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("rsyncfile")
 	if err != nil {
-		Autngo.HttpHelper.HttpResponseCode(w, STATUS_FAIL,"FormParseError")
+		Autngo.HttpHelper.HttpResponseCode(w, STATUS_FAIL, "FormParseError")
 		return
 	}
 	defer file.Close()
@@ -217,31 +216,27 @@ func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 	dirpath := filepath.Dir(dstFile)
 	if !Autngo.FileHepler.FileIsExist(dirpath) {
 		if err := os.MkdirAll(dirpath, os.ModePerm); err != nil {
-			Autngo.HttpHelper.HttpResponseCodeData(w,STATUS_FAIL,"CreateFile",dstFile)
+			Autngo.HttpHelper.HttpResponseCodeData(w, STATUS_FAIL, "CreateFile", dstFile)
 			return
 		}
 	}
-	cur, err := os.Create(dstFile);
+	cur, err := os.Create(dstFile)
 	if err != nil {
 		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", Autngo.HttpHelper.GetRemoteIP(r), header.Filename, "CreateError"))
-		Autngo.HttpHelper.HttpResponseCodeData(w,STATUS_FAIL,"CreateError",dstFile)
+		Autngo.HttpHelper.HttpResponseCodeData(w, STATUS_FAIL, "CreateError", dstFile)
 		return
 	}
 	defer cur.Close()
 
 	res := STATUS_FAIL
-	result :="error"
+	result := "error"
 	_, erro := io.Copy(cur, file)
 	if erro != nil {
 		result = "WriteError"
 	} else {
-		result ="RysncSuccess"
+		result = "RysncSuccess"
 		res = STATUS_SUCCESS
 	}
 	log.Println(fmt.Sprintf("%s rsyncfile %s  %s", Autngo.HttpHelper.GetRemoteIP(r), header.Filename, result))
-	Autngo.HttpHelper.HttpResponseCode(w,res,result)
+	Autngo.HttpHelper.HttpResponseCode(w, res, result)
 }
-
-
-
-

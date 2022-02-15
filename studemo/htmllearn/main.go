@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"golang.org/x/net/html"
 	"io"
 	"log"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 func main() {
@@ -72,11 +73,10 @@ x       extract with full paths
 	for cc := bn.FirstChild; cc != nil; cc = cc.NextSibling {
 		//node := bn.FirstChild
 		text := &bytes.Buffer{}
-		collectText(cc,text)
-		fmt.Println(cc.Data,text)
+		collectText(cc, text)
+		fmt.Println(cc.Data, text)
 
 	}
-
 
 	//parseHtml(doc)
 	//fmt.Println(doc.)
@@ -112,7 +112,6 @@ x       extract with full paths
 	//		}
 	//	}
 	//}
-
 
 }
 func collectText(n *html.Node, buf *bytes.Buffer) {

@@ -39,6 +39,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	Autngo "github.com/0opslab/autngo"
 )
 
 type ServerConfig struct {
@@ -53,6 +55,8 @@ type ServerConfig struct {
 }
 
 var conf = ServerConfig{}
+var STATUS_SUCCESS = 10000
+var STATUS_FAIL = 10001
 
 func main() {
 
@@ -91,13 +95,13 @@ func main() {
 }
 
 func RandomFile(path string, suffix string) (string, error) {
-	if (!IsFileExist(path)) {
+	if !IsFileExist(path) {
 		err := os.MkdirAll(path, os.ModePerm)
 		return "", err
 	}
 	for {
 		dstFile := path + NewLenChars(conf.FILENAMELENGTH) + suffix
-		if (!IsFileExist(dstFile)) {
+		if !IsFileExist(dstFile) {
 			return dstFile, nil
 		}
 	}
@@ -141,7 +145,7 @@ func NewLenChars(length int) string {
 	}
 }
 
-func getCurrentIP(r http.Request) (string) {
+func getCurrentIP(r http.Request) string {
 	ip := r.Header.Get("X-Real-IP")
 	if ip == "" {
 		return r.RemoteAddr
@@ -151,46 +155,38 @@ func getCurrentIP(r http.Request) (string) {
 
 func RsyncHandler(w http.ResponseWriter, r *http.Request) {
 	file, header, err := r.FormFile("rsyncfile")
-	defer file.Close()
 	if err != nil {
 		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "FormParseError"))
-		res := fmt.Sprintf("{'code':'error'}")
-		w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-		fmt.Fprintf(w, res)
+		Autngo.HttpHelper.HttpResponseCode(w, STATUS_FAIL, "error")
 		return
 	}
+	defer file.Close()
+
 	dstFile := conf.PATH + header.Filename
 	if IsFileExist(dstFile) {
 		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "FileExists"))
-		res := fmt.Sprintf("{'code':'error'}")
-		w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-		fmt.Fprintf(w, res)
+		Autngo.HttpHelper.HttpResponseCode(w, STATUS_FAIL, "FileExists")
 		return
 	}
-
-	cur, err := os.Create(dstFile);
-	defer cur.Close()
+	cur, err := os.Create(dstFile)
 	if err != nil {
 		log.Println(fmt.Sprintf("%s rsyncfile %s %s ", getCurrentIP(*r), header.Filename, "CreateError"))
-		res := fmt.Sprintf("{'code':'error'}")
-		w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-		fmt.Fprintf(w, res)
+		Autngo.HttpHelper.HttpResponseCode(w, STATUS_FAIL, "CreateFileError")
 		return
 	}
+	defer cur.Close()
 
-	res := fmt.Sprintf("{'code':'error'}")
+	res := STATUS_FAIL
 	loginfo := ""
 	_, erro := io.Copy(cur, file)
 	if erro != nil {
 		loginfo = fmt.Sprintf("%s rsyncfile %s  %s", getCurrentIP(*r), header.Filename, "WriteError")
 	} else {
 		loginfo = fmt.Sprintf("%s rsyncfile %s  %s", getCurrentIP(*r), header.Filename, "RysncSuccess")
-		res = fmt.Sprintf("{'code':'success'}")
-
+		res = STATUS_SUCCESS
 	}
 	log.Println(loginfo)
-	w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-	fmt.Fprintf(w, res)
+	Autngo.HttpHelper.HttpResponseCode(w, res, "CreateFileError")
 }
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -210,12 +206,11 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			basePath += "/" + ppath
 		}
 	}
-	if (!strings.HasSuffix(basePath, "/")) {
+	if !strings.HasSuffix(basePath, "/") {
 		basePath += "/"
 	}
 
 	basePath = re3.ReplaceAllString(basePath, "/")
-
 	bastPathLen := len(conf.PATH) - 1
 	reader, err := r.MultipartReader()
 	if err != nil {
@@ -224,6 +219,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := ""
+	resCode := STATUS_FAIL
 	res := "success"
 	for {
 		part, err := reader.NextPart()
@@ -231,6 +227,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		if newfile, err := RandomFile(basePath, path.Ext(part.FileName())); err == nil {
+			resCode = STATUS_SUCCESS
 			if part.FileName() != "" {
 				dst, _ := os.Create(newfile)
 				defer dst.Close()
@@ -245,13 +242,13 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		} else {
 			log.Println(fmt.Sprintf("%s uploadfile [%s][%s] CreateDestinationFileError", getCurrentIP(*r),
-				part.FormName(), part.FileName(), newfile))
-			s += fmt.Sprintf("%s@%s:'%s',", part.FormName(), part.FileName())
+				part.FormName(), newfile))
+			s += fmt.Sprintf("%s@%s:'%s',", getCurrentIP(*r), part.FormName(), part.FileName())
 			res = "error"
 		}
 	}
-	w.Header().Add("Content-Type", "application/json;charset:utf-8;")
-	fmt.Fprintf(w, fmt.Sprintf("{'code':'%s',results:{%s}}", res, strings.Trim(s, ",")))
+	log.Println(strings.Trim(s, ","))
+	Autngo.HttpHelper.HttpResponseCode(w, resCode, res)
 }
 
 func Rsync(url string, dstPath string, files string) {

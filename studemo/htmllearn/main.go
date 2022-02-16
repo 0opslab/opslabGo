@@ -11,6 +11,9 @@ import (
 	"golang.org/x/net/html"
 )
 
+/**
+用go原生库解析html文件
+*/
 func main() {
 	htmlStr := `
 <h2>7z

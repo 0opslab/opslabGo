@@ -15,9 +15,11 @@ require (
 	github.com/druidcaesa/gotool v0.0.0-20210820022536-52fde3f59bc4 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-redis/redis v6.15.2+incompatible //indirect
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/gomarkdown/mdtohtml v0.0.0-20180202094705-7346712f31b4 // indirect
 	github.com/google/logger v1.0.1
 	github.com/gookit/color v1.3.2 // indirect
+	github.com/jmoiron/sqlx v1.3.4 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.18 // indirect
 	github.com/russross/blackfriday v2.0.0+incompatible // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect

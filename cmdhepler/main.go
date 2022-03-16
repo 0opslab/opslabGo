@@ -18,24 +18,26 @@ import (
 
 type HelperConfig struct {
 	//监听地址和端口
-	ADDR string `json:'ADDR'`
+	ADDR string `json:"ADDR"`
 	//文件写入路径
-	PATH string `json:'PATH'`
+	PATH string `json:"PATH"`
 	//同步的地址
-	STYLE struct {
-		H1_FG string `json STYLE.h1_fg`
-		H1_BG string `json STYLE.h1_bg`
-		H2_FG string `json STYLE.h2_fg`
-		H2_BG string `json STYLE.h2_bg`
-		H3_FG string `json STYLE.h3_fg`
-		H3_BG string `json STYLE.h3_bg`
-		H4_FG string `json STYLE.h4_fg`
-		H4_BG string `json STYLE.h4_bg`
-		H5_FG string `json STYLE.h5_fg`
-		H5_BG string `json STYLE.h5_bg`
-		H6_FG string `json STYLE.h6_fg`
-		H6_BG string `json STYLE.h6_bg`
-	} `json:'STYLE'`
+	STYLE StyleConfig `json:"STYLE"`
+}
+
+type StyleConfig struct {
+	H1_FG string `json:"h1_fg"`
+	H1_BG string `json:"h1_bg"`
+	H2_FG string `json:"h2_fg"`
+	H2_BG string `json:"h2_bg"`
+	H3_FG string `json:"h3_fg"`
+	H3_BG string `json:"h3_bg"`
+	H4_FG string `json:"h4_fg"`
+	H4_BG string `json:"h4_bg"`
+	H5_FG string `json:"h5_fg"`
+	H5_BG string `json:"h5_bg"`
+	H6_FG string `json:"h6_fg"`
+	H6_BG string `json:"h6_bg"`
 }
 
 var App = HelperConfig{}
@@ -105,7 +107,8 @@ func main() {
 		if i > 0 {
 			files, _, _ := autngo.FileHepler.WalkDirFiles(cmdPath, "md")
 			for _, file := range files {
-				if strings.ToLower(TrimFile(file)) == strings.ToLower(v) {
+				if strings.EqualFold(TrimFile(file), v) {
+					//if strings.ToLower(TrimFile(file)) == strings.ToLower(v) {
 					fileContent, err := ioutil.ReadFile(file)
 					if err != nil {
 						color.Red.Println("ReadFileError")

@@ -45,13 +45,13 @@ import (
 
 type ServerConfig struct {
 	//监听地址和端口
-	ADDR string `json:'ADDR'`
+	ADDR string `json:"ADDR"`
 	//文件写入路径
-	PATH string `json:'PATH'`
+	PATH string `json:"PATH"`
 	//文件名随机长度
-	FILENAMELENGTH int `json:'FILENAMELENGTH'`
+	FILENAMELENGTH int `json:"FILENAMELENGTH"`
 	//同步的地址
-	RYSNCADDR []string `json:'RYSNCADDR'`
+	RYSNCADDR []string `json:"RYSNCADDR"`
 }
 
 var conf = ServerConfig{}
@@ -195,7 +195,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	uploadPath := r.Header.Get("Path")
 	basePath := conf.PATH
 
-	re2, _ := regexp.Compile("\\.{2,}")
+	re2, _ := regexp.Compile(`.{1,}`)
 	re3, _ := regexp.Compile("/{2,}")
 
 	if uploadPath != "" {

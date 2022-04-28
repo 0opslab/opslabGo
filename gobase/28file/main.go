@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"opslabGo/studemo/base/28file/demo"
-	"opslabGo/studemo/base/28file/funcs"
+	"opslabGo/gobase/28file/demo"
+	"opslabGo/gobase/28file/funcs"
 	"os"
 	"path/filepath"
 )
@@ -24,6 +24,8 @@ func main() {
 		fmt.Println(file_name1, err0)
 	}
 
+	file_name2 := "/local/workspace/opslabGo/data/tmp/go_file2.txt"
+	writeString(file_name2)
 	//loadfile
 	lines, err := funcs.Read_File_Line(file_name1)
 	fmt.Println(lines, err)
@@ -69,11 +71,11 @@ func main() {
 */
 func write(file_name string) error {
 	fout, err := os.Create(file_name)
-	defer fout.Close()
 
 	if err != nil {
 		return err
 	}
+	defer fout.Close()
 
 	for i := 0; i < 10; i++ {
 		fout.WriteString("0opslab.com\r\n")
@@ -117,16 +119,16 @@ func readAll(file_name string) (string, error) {
 
 func readByByte(file_name string) error {
 	fin, err := os.Open(file_name)
-	defer fin.Close()
 
 	if err != nil {
 		return err
 	}
+	defer fin.Close()
 
 	buf := make([]byte, 1024)
 	for {
 		n, _ := fin.Read(buf)
-		if 0 == n {
+		if n == 0 {
 			break
 		}
 		fmt.Println(buf[:n])
@@ -136,21 +138,20 @@ func readByByte(file_name string) error {
 }
 func readByLine(file_name string) error {
 	fin, err := os.Open(file_name)
+	if err != nil {
+		return err
+	}
 	defer fin.Close()
 
-	if err == nil {
-		buff := bufio.NewReader(fin)
-		for {
-			//以\r\n为结束符读入一行
-			//此处如果使用ReadLine()方法更加完美
-			line, err := buff.ReadString('\n')
-			if err != nil {
-				return err
-			}
-			fmt.Println("read line =>", line)
+	buff := bufio.NewReader(fin)
+	for {
+		//以\r\n为结束符读入一行
+		//此处如果使用ReadLine()方法更加完美
+		line, err := buff.ReadString('\n')
+		if err != nil {
+			return err
 		}
-	} else {
-		return err
+		fmt.Println("read line =>", line)
 	}
 
 }
@@ -186,6 +187,6 @@ func file_list(path string) {
 		return nil
 	})
 	if err != nil {
-		fmt.Println("filepath.Walt() return %v\n", err)
+		fmt.Println("filepath.Walt() return %v", err)
 	}
 }

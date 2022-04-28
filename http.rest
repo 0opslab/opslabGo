@@ -1,0 +1,8 @@
+### QueryData
+POST http://localhost:10000/data
+Content-type: application/json
+
+{
+  Iname:"QueryName",
+  "QueryParams": {"fn":1,"fn2":2}
+}

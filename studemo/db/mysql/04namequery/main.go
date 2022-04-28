@@ -7,13 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func select_db(db *sqlx.DB, sql string, args ...interface{}) (map[int]map[string]string, error) {
-	rows2, err := db.Query(sql, args...)
-	if err != nil {
-		fmt.Println("db query error:", err)
-		return nil, err
-	}
-
+func rows2map(rows2 *sqlx.Rows) map[int]map[string]string {
 	//返回所有列
 	cols, _ := rows2.Columns()
 	//这里表示一行所有列的值，用[]byte表示
@@ -45,13 +39,8 @@ func select_db(db *sqlx.DB, sql string, args ...interface{}) (map[int]map[string
 		i++
 	}
 	rows2.Close()
-	fmt.Println(result)
-	for k, v := range result {
-		fmt.Println("第", k, "行", "===>", v["country"], v["city"], v["telcode"], v)
-	}
-	return result, err
+	return result
 }
-
 func main() {
 	var err error
 	var db *sqlx.DB
@@ -60,14 +49,30 @@ func main() {
 		fmt.Println("open db error:", err)
 	}
 
-	sql := "SELECT 'country', 'city', 11 as telcode FROM dual"
-	select_db(db, sql)
+	rows2, errs := db.NamedQuery(`SELECT 'country', 'city', 11 as telcode FROM dual where 1=:fn`,
+		map[string]interface{}{"fn": 1, "fn2": 2})
+	if errs != nil {
+		fmt.Println("open db error:", errs)
+		return
+	}
+	result := rows2map(rows2)
 
-	sql2 := "SELECT 'country', 'city', 11 as telcode FROM dual where 1=?"
-	select_db(db, sql2, 2)
+	fmt.Println(result)
+	for k, v := range result {
+		fmt.Println("第", k, "行", "===>", v)
+	}
 
-	sql3 := "SELECT 'country', 'city', 11 as telcode FROM dual where 1=?"
-	select_db(db, sql3, 2, 4, 5)
+	rows3, errs := db.Queryx(`select * from t_stock_info limit 2`)
+	if errs != nil {
+		fmt.Println("open db error:", errs)
+		return
+	}
+	result1 := rows2map(rows3)
+
+	fmt.Println(result1)
+	for k, v := range result1 {
+		fmt.Println("第", k, "行", "===>", v)
+	}
 
 	db.Close()
 }

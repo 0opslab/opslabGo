@@ -66,8 +66,5 @@ func main() {
 	sql2 := "SELECT 'country', 'city', 11 as telcode FROM dual where 1=?"
 	select_db(db, sql2, 2)
 
-	sql3 := "SELECT 'country', 'city', 11 as telcode FROM dual where 1=?"
-	select_db(db, sql3, 2, 4, 5)
-
 	db.Close()
 }

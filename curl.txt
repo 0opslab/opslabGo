@@ -1,6 +1,0 @@
-curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"Iname": "test_1","QueryParams": {"fn":1,"fn2":2}}'  http://localhost:10000/data
-
-curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"Iname": "test_2","QueryParams": {"fn":1,"fn2":2}}'  http://localhost:10000/data
-
-ab -n 100000 -c 400 -p params.json  -T application/json http://localhost:10000/data
-
